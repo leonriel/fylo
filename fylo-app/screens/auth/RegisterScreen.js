@@ -1,55 +1,17 @@
-import { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, Button, Alert } from 'react-native';
-import {
-	CognitoUserPool,
-	CognitoUserAttribute,
-	CognitoUser,
-} from 'amazon-cognito-identity-js';
-
-import { USER_POOL_ID, CLIENT_ID } from '@env';
+import { useState, useContext } from 'react';
+import { SafeAreaView, StyleSheet, Text, TextInput, Button } from 'react-native';
+import { AuthContext } from '../../contexts/AuthContext';
 
 const RegisterScreen = ({ navigation }) => {
+    const { signUp } = useContext(AuthContext);
+
     const [username, setUsername] = useState(null);
     const [email, setEmail] = useState(null);
     const [phone, setPhone] = useState(null);
     const [password, setPassword] = useState(null);
 
-    let poolData = {
-        UserPoolId: USER_POOL_ID,
-        ClientId: CLIENT_ID
-    }
-
-    let userPool = new CognitoUserPool(poolData);
-
     const onRegister = () => {
-        console.log(username, email, phone, password);
-        let attributeList = [];
-
-        let dataEmail = {
-            Name: 'email',
-            Value: 'fylo.proj@gmail.com'
-        }
-    
-        let dataPhoneNumber = {
-            Name: 'phone_number',
-            Value: '+13608909433'
-        }
-    
-        let attributeEmail = new CognitoUserAttribute(dataEmail);
-        let attributePhoneNumber = new CognitoUserAttribute(dataPhoneNumber);
-    
-        attributeList.push(attributeEmail);
-        attributeList.push(attributePhoneNumber);
-        userPool.signUp('fylo', 'Abcdefg!1', attributeList, null, function(
-            err,
-            result
-        ) {
-            if (err) {
-                return Alert.alert(err.message || JSON.stringify(err));
-            }
-            var cognitoUser = result.user;
-            console.log('user name is ' + cognitoUser.getUsername());
-        });
+        signUp(username, email, phone, password);
     }
 
     return (

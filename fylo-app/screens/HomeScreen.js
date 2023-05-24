@@ -1,10 +1,17 @@
+import { useContext } from 'react';
 import { Button } from 'react-native';
+import { AuthContext } from '../contexts/AuthContext';
 
 const HomeScreen = ({ navigation }) => {
+    const {signOut } = useContext(AuthContext);
+
+    const onLogout = () => {
+        signOut();
+    }
+
     return (
         <>
-            <Button title="Go to register" onPress={() => navigation.navigate('Register')} />
-            <Button title="Go to login" onPress={() => navigation.navigate('Login')} />
+            <Button title="Logout" onPress={onLogout} />
         </>
     );
 }
