@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { CognitoUserAttribute, AuthenticationDetails, CognitoUser } from 'amazon-cognito-identity-js';
 import * as AWS from 'aws-sdk/global';
+import axios from 'axios';
 
 import RegisterScreen from './screens/auth/RegisterScreen';
 import LoginScreen from './screens/auth/LoginScreen';
@@ -150,6 +151,22 @@ export default function App() {
             }
             var cognitoUser = result.user;
             console.log('user name is ' + cognitoUser.getUsername());
+        });
+      },
+      verifyUser: async (username, code) => {
+        let userData = {
+          Username: username,
+          Pool: userPool
+        };
+
+        let cognitoUser = new CognitoUser(userData);
+
+        cognitoUser.confirmRegistration(code, true, (err, result) => {
+          if (err) {
+            return Alert.alert(err.message || JSON.stringify(err));
+          }
+
+          console.log('call result: ' + result);
         });
       }
     })
