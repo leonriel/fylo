@@ -125,6 +125,10 @@ export default function App() {
         })
       },
       signUp: async (username, email, phone, password) => {
+        if (!username || !email || !phone || !password) {
+          return Alert.alert('Missing fields.');
+        }
+
         let attributeList = [];
 
         let dataEmail = {
