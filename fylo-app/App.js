@@ -124,17 +124,16 @@ export default function App() {
         })
       },
       signUp: async (username, email, phone, password) => {
-        console.log(username, email, phone, password);
         let attributeList = [];
 
         let dataEmail = {
             Name: 'email',
-            Value: 'fylo.proj@gmail.com'
+            Value: email
         }
     
         let dataPhoneNumber = {
             Name: 'phone_number',
-            Value: '+13608909433'
+            Value: "+1" + phone
         }
     
         let attributeEmail = new CognitoUserAttribute(dataEmail);
@@ -142,7 +141,7 @@ export default function App() {
     
         attributeList.push(attributeEmail);
         attributeList.push(attributePhoneNumber);
-        userPool.signUp('fylo4', 'Abcdefg!1', attributeList, null, function(
+        userPool.signUp(username, password, attributeList, null, function(
             err,
             result
         ) {
