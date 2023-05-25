@@ -170,6 +170,12 @@ export default function App() {
             return Alert.alert(err.message || JSON.stringify(err));
           }
 
+          axios.post("https://fylo-app-server.herokuapp.com/api/createUser", {
+            "username": username
+          }).then((resp) => {
+            console.log(resp.data.username);
+          });
+
           console.log('call result: ' + result);
         });
       }
