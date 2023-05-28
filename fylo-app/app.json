@@ -9,10 +9,19 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "assetBundlePatterns": [
       "**/*"
+    ],
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The Fylo accesses your photos to let you share them with your friends.",
+          "cameraPermission": "Allow Fylo to access your camera."
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true

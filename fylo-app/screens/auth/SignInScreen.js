@@ -3,7 +3,7 @@ import { SafeAreaView, Text, TextInput, Button, StyleSheet } from 'react-native'
 import { AuthContext } from '../../contexts/AuthContext';
 
 
-const LoginScreen = ({ navigation }) => {
+const SignInScreen = ({ navigation }) => {
     const { signIn } = useContext(AuthContext)
     const [username, setUsername] = useState(null);
     const [password, setPassword] = useState(null);
@@ -19,8 +19,7 @@ const LoginScreen = ({ navigation }) => {
             <Text>Password</Text>
             <TextInput secureTextEntry={true} style={styles.input} onChangeText={(text) => setPassword(text)} value={password} />
             <Button title="Login" onPress={onLogin} />
-            <Button title="Go to register" onPress={() => navigation.navigate('Register')} />
-            <Button title="Go to home" onPress={() => navigation.navigate('Home')} />
+            <Button title="New? Sign Up" onPress={() => navigation.navigate('Sign Up')} />
         </SafeAreaView>
     );
 }
@@ -40,4 +39,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default LoginScreen;
+export default SignInScreen;

@@ -3,33 +3,57 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import * as SplashScreen from 'expo-splash-screen';
+
 import { CognitoUserAttribute, AuthenticationDetails, CognitoUser } from 'amazon-cognito-identity-js';
 import * as AWS from 'aws-sdk/global';
-import axios from 'axios';
 
-import RegisterScreen from './screens/auth/RegisterScreen';
-import LoginScreen from './screens/auth/LoginScreen';
+import SignUpScreen from './screens/auth/SignUpScreen';
+import SignInScreen from './screens/auth/SignInScreen';
 import HomeScreen from './screens/HomeScreen';
+import SessionsNavigator from './screens/SessionsNavigator';
+// import SplashScreen from './screens/SplashScreen';
 import { AuthContext } from './contexts/AuthContext';
+import { SessionsContext } from './contexts/SessionsContext';
 
 import { userPool } from './utils/UserPool';
 import { IDENTITY_POOL_ID, USER_POOL_ID } from '@env';
 
+import axios from 'axios';
+
 const Stack = createNativeStackNavigator();
 
-// TODO: Set up navigation from register/login to home
-// TODO: Set up user auth with cognito and jwt
-// TODO: Create test user
+const Tab = createBottomTabNavigator();
+
+SplashScreen.preventAutoHideAsync();
+
+// TODO: Clean up this file
+// TODO: Start working on Friendships and Notifications (prioritize Notifications)
 
 export default function App() {
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [sessions, setSessions] = useState([]); // May want to put this in a context to give all the components ability to add sessions
+  const [user, setUser] = useState(null);
+  const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
-    getSession();
+    const prepare = async () => {
+      try {
+        await getAuthSession();
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      } catch (error) {
+        console.warn(error);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
   }, []);
 
   // First loading onto the app
-  const getSession = () => {
+  const getAuthSession = async () => {
     userPool.storage.sync((err, result) => {
         if (err) {
             return Alert.alert(err.message || JSON.stringify(err));
@@ -37,7 +61,7 @@ export default function App() {
   
         let cognitoUser = userPool.getCurrentUser();
         if (cognitoUser != null) {
-            cognitoUser.getSession(function(err, session) {
+            cognitoUser.getSession((err, session) => {
                 if (err) {
                     Alert.alert(err.message || JSON.stringify(err));
                     return;
@@ -53,11 +77,14 @@ export default function App() {
                     Logins: loginProvider
                 });
   
+                loadData(cognitoUser.getUsername());
                 setIsSignedIn(true);
             });
         }
     });
   }
+
+  // Might want to migrate context methods somewhere else
 
   // SignUp / SignIn / SignOut functionalities
   const authContext = useMemo(
@@ -102,8 +129,8 @@ export default function App() {
                         // Instantiate aws sdk service objects now that the credentials have been updated.
                         // example: var s3 = new AWS.S3();
                         console.log('Successfully logged!');
+                        loadData(cognitoUser.getUsername());
                         setIsSignedIn(true);
-                        
                     }
                 });
             },
@@ -170,6 +197,7 @@ export default function App() {
             return Alert.alert(err.message || JSON.stringify(err));
           }
 
+          // Create user in MongoDB when user has been verified
           axios.post("https://fylo-app-server.herokuapp.com/api/createUser", {
             "username": username
           }).then((resp) => {
@@ -178,26 +206,80 @@ export default function App() {
 
           console.log('call result: ' + result);
         });
+      },
+      refreshUser: async (username) => {
+        getUser(username);
       }
     })
   )
 
+  const sessionsContext = useMemo(
+    () => ({
+      reloadSessions: async (sessions) => {
+        getSessions(sessions);
+      }
+    })
+  )
+
+  const loadData = async (username) => {
+    const currentUser = await getUser(username);
+    const currentSessions = await getSessions(currentUser.sessions);
+  }
+
+  // These should probably be somewhere else
+  const getSessions = async (sessionIds) => {
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/api/getSessions", {sessionIds: sessionIds});
+    setSessions(resp.data);
+    return resp.data;
+  }
+
+  const getUser = async (username) => {
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/api/getUser", {username: username});
+    setUser(resp.data);
+    return resp.data;
+  }
+
+  const onFinishedMounting = async () => {
+    if (appIsReady) {
+      await SplashScreen.hideAsync();
+    }
+  }
+
+  if (!appIsReady) {
+    return null;
+  }
+
   return (
     <AuthContext.Provider value={authContext}>
-      <NavigationContainer>
-        <Stack.Navigator>
+      <NavigationContainer onReady={onFinishedMounting}>
           {isSignedIn ? (
-            <Stack.Screen name="Home" component={HomeScreen} />
+            user ? (
+            <SessionsContext.Provider value={sessionsContext}>
+              <Tab.Navigator>
+                <Tab.Screen name="Home" children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} />
+                <Tab.Screen 
+                  name="SessionsNavigator" 
+                  options={{
+                    headerShown: false,
+                    title: "Sessions"
+                  }} 
+                  children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
+                />
+              </Tab.Navigator>
+            </SessionsContext.Provider>
+            ) : (
+              <SplashScreen />
+            )
           ) : (
-            <>
-              <Stack.Screen name="Register" component={RegisterScreen} />
-              <Stack.Screen name="Login" component={LoginScreen} />
-            </>
+            <Stack.Navigator>
+              <Stack.Screen name="Sign In" component={SignInScreen} />
+              <Stack.Screen name="Sign Up" component={SignUpScreen} />
+            </Stack.Navigator>
           )
           }
-        </Stack.Navigator>
       </NavigationContainer>
-    </AuthContext.Provider>);
+    </AuthContext.Provider>
+    );
 }
 
 const styles = StyleSheet.create({

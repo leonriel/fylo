@@ -2,7 +2,7 @@ import { useState, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, Button, Modal, Alert } from 'react-native';
 import { AuthContext } from '../../contexts/AuthContext';
 
-const RegisterScreen = ({ navigation }) => {
+const SignUpScreen = ({ navigation }) => {
     const { signUp, verifyUser } = useContext(AuthContext);
 
     const [username, setUsername] = useState(null);
@@ -37,7 +37,7 @@ const RegisterScreen = ({ navigation }) => {
             <Text>Password</Text>
             <TextInput secureTextEntry={true} style={styles.input} onChangeText={(text) => setPassword(text)} value={password} />
             <Button title="Sign Up" onPress={handleSignUp} />
-            <Button title="Go to login" onPress={() => navigation.navigate('Login')} />
+            <Button title="Go to login" onPress={() => navigation.navigate('Sign In')} />
             <Modal
                 animationType="slide"
                 visible={modalVisible}
@@ -68,4 +68,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default RegisterScreen;
+export default SignUpScreen;
