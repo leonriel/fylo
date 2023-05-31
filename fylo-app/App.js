@@ -13,7 +13,7 @@ import SignUpScreen from './screens/auth/SignUpScreen';
 import SignInScreen from './screens/auth/SignInScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionsNavigator from './screens/SessionsNavigator';
-// import SplashScreen from './screens/SplashScreen';
+import FriendsScreen from './screens/FriendsScreen';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
@@ -30,10 +30,11 @@ SplashScreen.preventAutoHideAsync();
 
 // TODO: Clean up this file
 // TODO: Start working on Friendships and Notifications (prioritize Notifications)
+// Something weird happens when the app is loaded for the first time...
 
 export default function App() {
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [sessions, setSessions] = useState([]); // May want to put this in a context to give all the components ability to add sessions
+  const [sessions, setSessions] = useState([]); 
   const [user, setUser] = useState(null);
   const [appIsReady, setAppIsReady] = useState(false);
 
@@ -151,8 +152,8 @@ export default function App() {
           }
         })
       },
-      signUp: async (username, email, phone, password) => {
-        if (!username || !email || !phone || !password) {
+      signUp: async (username, firstName, lastName, email, phone, password) => {
+        if (!username || !firstName || !lastName || !email || !phone || !password) {
           return Alert.alert('Missing fields.');
         }
 
@@ -184,7 +185,7 @@ export default function App() {
             console.log('user name is ' + cognitoUser.getUsername());
         });
       },
-      verifyUser: async (username, code) => {
+      verifyUser: async (username, firstName, lastName, code) => {
         let userData = {
           Username: username,
           Pool: userPool
@@ -198,8 +199,10 @@ export default function App() {
           }
 
           // Create user in MongoDB when user has been verified
-          axios.post("https://fylo-app-server.herokuapp.com/api/createUser", {
-            "username": username
+          axios.post("https://fylo-app-server.herokuapp.com/user/create", {
+            username: username,
+            firstName: firstName,
+            lastName: lastName
           }).then((resp) => {
             console.log(resp.data.username);
           });
@@ -228,13 +231,13 @@ export default function App() {
 
   // These should probably be somewhere else
   const getSessions = async (sessionIds) => {
-    const resp = await axios.post("https://fylo-app-server.herokuapp.com/api/getSessions", {sessionIds: sessionIds});
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/session/getMany", {sessionIds: sessionIds});
     setSessions(resp.data);
     return resp.data;
   }
 
   const getUser = async (username) => {
-    const resp = await axios.post("https://fylo-app-server.herokuapp.com/api/getUser", {username: username});
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/user/getOne", {username: username});
     setUser(resp.data);
     return resp.data;
   }
@@ -255,7 +258,8 @@ export default function App() {
           {isSignedIn ? (
             user ? (
             <SessionsContext.Provider value={sessionsContext}>
-              <Tab.Navigator>
+              <Tab.Navigator initialRouteName='Home'>
+                <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} />
                 <Tab.Screen name="Home" children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} />
                 <Tab.Screen 
                   name="SessionsNavigator" 
