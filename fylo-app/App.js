@@ -272,7 +272,7 @@ export default function App() {
               </Tab.Navigator>
             </SessionsContext.Provider>
             ) : (
-              <SplashScreen />
+              <Text>This should be the splash screen!</Text>
             )
           ) : (
             <Stack.Navigator>

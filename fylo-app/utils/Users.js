@@ -30,15 +30,7 @@ export const addFriend = async (user, friend) => {
         friend: friend.username
     });
 
-    const sendNotification = axios.post("https://fylo-app-server.herokuapp.com/user/sendNotification", {
-        receiverUsername: friend,
-        type: "friend",
-        senderFirstName: user.firstName,
-        senderLastName: user.lastName,
-        senderUsername: user.username
-    });
-
-    return axios.all([addFriend, sendNotification]);
+    return addFriend;
 }
 
 export const removeFriend = async (user, friend) => {
