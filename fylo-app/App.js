@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Alert } from 'react-native';
+import { StyleSheet, Alert, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -27,10 +27,6 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 SplashScreen.preventAutoHideAsync();
-
-// TODO: Clean up this file
-// TODO: Start working on Friendships and Notifications (prioritize Notifications)
-// Something weird happens when the app is loaded for the first time...
 
 export default function App() {
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -64,7 +60,7 @@ export default function App() {
         if (cognitoUser != null) {
             cognitoUser.getSession((err, session) => {
                 if (err) {
-                    Alert.alert(err.message || JSON.stringify(err));
+                    // Alert.alert(err.message || JSON.stringify(err));
                     return;
                 }
                 console.log('session validity: ' + session.isValid());
@@ -161,7 +157,7 @@ export default function App() {
 
         let dataEmail = {
             Name: 'email',
-            Value: email
+            Value: email.toLowerCase()
         }
     
         let dataPhoneNumber = {

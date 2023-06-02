@@ -32,11 +32,18 @@ const styles = StyleSheet.create({
     },
     input: {
         width: '80%',
-        borderBottomWidth: 2,
+        borderBottomWidth: 1,
+        borderTopWidth: 1,
+        borderRightWidth: 1,
+        borderLeftWidth: 1,
+        borderTopRightRadius: 5,
+        borderTopLeftRadius: 5,
+        borderBottomRightRadius: 5,
+        borderBottomLeftRadius: 5,
         margin: 8,
-        padding: 2,
+        padding: 8,
         fontSize: 16
-    }
+    },
 });
 
 export default SignInScreen;

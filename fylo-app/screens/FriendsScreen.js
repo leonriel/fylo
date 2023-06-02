@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { Text, StyleSheet, SafeAreaView, TextInput, Alert, View, Button, Keyboard } from 'react-native';
-import { getUsers, addFriend, removeFriend, searchUsers } from '../utils/Users';
+import { getUsers, sendFriendRequest, removeFriend, searchUsers } from '../utils/Users';
 import { AuthContext } from '../contexts/AuthContext';
 
 const FriendsScreen = ({navigation, user}) => {
@@ -56,7 +56,7 @@ const FriendsScreen = ({navigation, user}) => {
     }
 
     const handleAddFriend = async (friend) => {
-        addFriend(user, friend).then((resp) => {
+        sendFriendRequest(user, friend).then((resp) => {
             Alert.alert("Friend added!");
             refreshUser(user.username);
         });
