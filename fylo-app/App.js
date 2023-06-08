@@ -227,7 +227,7 @@ export default function App() {
 
   // These should probably be somewhere else
   const getSessions = async (sessionIds) => {
-    const resp = await axios.post("https://fylo-app-server.herokuapp.com/session/getMany", {sessionIds: sessionIds});
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/session/getMany", {sessions: sessionIds});
     setSessions(resp.data);
     return resp.data;
   }

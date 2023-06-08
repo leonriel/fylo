@@ -1,43 +1,26 @@
 import axios from 'axios';
 
-export const createSession = async (username, sessionName) => {
-    const createSession = axios.post("https://fylo-app-server.herokuapp.com/session/create", {
+// Use MongoDB transactions instead
+
+export const createSession = async (userId, sessionName) => {
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/session/create", {
         name: sessionName,
-        owner: username
+        owner: userId
     });
 
-    const updateUser = axios.post("https://fylo-app-server.herokuapp.com/user/hasActiveSession", {
-        username: username
-    });
-
-    const resp = await axios.all([createSession, updateUser]);
-
-   const session = resp[0].data;
-
-    const userResp = await axios.post("https://fylo-app-server.herokuapp.com/user/addSession", {
-        username: username,
-        sessionId: session._id
-    });
-
-    return userResp.data;
+    return resp.data;
 }
 
-export const endSession = async (username, session) => {
+export const endSession = async (userId, session) => {
     try {
-        if (username != session.owner) {
+        if (userId != session.owner) {
             throw {message: "User does not have permission to end this session"};
         }
-        const setSessionInactive = axios.post("http://fylo-app-server.herokuapp.com/session/end", {
-            sessionId: session._id
+        const resp = await axios.post("http://fylo-app-server.herokuapp.com/session/end", {
+            session: session._id
         });
 
-        const updateUsers = axios.post("http://fylo-app-server.herokuapp.com/user/endSessionForAll", {
-            contributors: session.contributors
-        })
-
-        const resp = await axios.all([setSessionInactive, updateUsers]);
-
-        return resp[0].data;
+        return resp.data;
     } catch (error) {
         return Alert.alert(error.message);
     } 

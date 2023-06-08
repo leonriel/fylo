@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+// Use MongoDB transactions instead
+
 export const getUsers = async (users) => {
     try {
         const res = await axios.post("https://fylo-app-server.herokuapp.com/user/getMany", {
@@ -14,10 +16,10 @@ export const getUsers = async (users) => {
 
 export const searchUsers = async (query) => {
     try {
-        const res = await axios.post("https://fylo-app-server.herokuapp.com/user/search", {
+        const res = await axios.post("https://fylo-app-server.herokuapp.com/user/globalSearch", {
             query: query
         });
-    
+
         return res.data;
     } catch (error) {
         console.log(error.message);
@@ -26,45 +28,35 @@ export const searchUsers = async (query) => {
 
 export const sendFriendRequest = async (user, friend) => {
     const sendFriendRequest = axios.post("https://fylo-app-server.herokuapp.com/friendRequest/create", {
-        sender: user.username,
-        receiver: friend.username
+        sender: user._id,
+        recipient: friend._id
     });
 
     return sendFriendRequest;
 }
 
-export const acceptFriendRequest = async (user, friend) => {
-    const updateFriendRequest = axios.post("https://fylo-app-server.herokuapp.com/friendRequest/setStatusAccepted", {
-        sender: user.username,
-        receiver: friend.username
+export const acceptFriendRequest = async (sender, recipient) => {
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/friendRequest/accept", {
+        sender: sender._id,
+        recipient: recipient._id
     });
 
-    const updateUsers = axios.post('https://fylo-app-server.herokuapp.com/user/addFriendMutually', {
-        username: user.username,
-        friend: friend.username
-    });
-
-    return axios.all([updateFriendRequest, updateUsers]);
+    return resp.data;
 }
 
 export const removeFriend = async (user, friend) => {
-    const updateUsers = axios.post("https://fylo-app-server.herokuapp.com/user/removeFriendMutually", {
-        username: user.username,
-        friend: friend.username
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/user/removeFriend", {
+        user: user._id,
+        friend: friend._id
     });
     
-    const deleteFriendRequest = axios.post("https://fylo-app-server.herokuapp.com/friendRequest/delete", {
-        username: user.username,
-        friend: friend.username
-    });
-    
-    return axios.all([updateUsers, deleteFriendRequest])
+    return resp.data;
 }
 
 export const getPendingIncomingFriendRequests = async (user) => {
     const friendRequests = await axios.post("https://fylo-app-server.herokuapp.com/friendRequest/getPendingIncoming", {
-        receiver: user.username
+        recipient: user._id
     });
 
-    return friendRequests
+    return friendRequests.data;
 }

@@ -1,13 +1,18 @@
 import { useState, useEffect, useContext } from 'react';
 import { Text, StyleSheet, SafeAreaView, TextInput, Alert, View, Button, Keyboard } from 'react-native';
-import { getUsers, sendFriendRequest, removeFriend, searchUsers } from '../utils/Users';
+import { getUsers, sendFriendRequest, removeFriend, searchUsers, getPendingIncomingFriendRequests } from '../utils/Users';
 import { AuthContext } from '../contexts/AuthContext';
+
+// The logic is really bad on this page, but the search queries work
+// Definitely want to split this into components
 
 const FriendsScreen = ({navigation, user}) => {
     const [searchedFriends, setSearchedFriends] = useState([]);
     const [searchedStrangers, setSearchedStrangers] = useState([]);
+    const [searchedPendingIncoming, setSearchedPendingIncoming] = useState([]);
     const [searchText, setSearchText] = useState('');
     const [friends, setFriends] = useState([]);
+    const [pendingIncoming, setPendingIncoming] = useState([]);
     const [searchActive, setSearchActive] = useState(false);
 
     const { refreshUser } = useContext(AuthContext);
@@ -18,30 +23,51 @@ const FriendsScreen = ({navigation, user}) => {
             setFriends(users);
         }
 
+        const loadPendingIncoming = async () => {
+            const users = await getPendingIncomingFriendRequests(user);
+            setPendingIncoming(users);
+        }
+
         loadFriends();
+        loadPendingIncoming();
     }, [user]);
 
     const handleUserSearch = async (query) => {
         const searchedUsers = await searchUsers(query);
 
+        const resultsPendingIncoming = [];
+
         const resultsFriends = [];
 
         const resultsStrangers = [];
 
+        const pendingIncomingIds = pendingIncoming.map(doc => {
+            const sender = doc.sender;
+            return sender._id;
+        })
+
         searchedUsers.forEach(searchedUser => {
+            const searchedId = searchedUser._id;
             const searchedUsername = searchedUser.username;
             const searchedFullName = searchedUser.fullName;
-            if (searchedUsername != user.username) {
-                if (user.friends.includes(searchedUsername)) {
+            if (searchedId != user._id) {
+                if (user.friends.includes(searchedId)) {
                     const component = (
-                        <View key={searchedUsername} style={styles.friend}>
+                        <View key={searchedId} style={styles.friend}>
                             <Text style={styles.text}>{searchedFullName}</Text>
                         </View>
                     )
                     resultsFriends.push(component);
-                } else {
+                } else if (pendingIncomingIds.includes(searchedId)) {
                     const component = (
-                        <View key={searchedUsername} style={styles.friend}>
+                        <View key={searchedId} style={styles.friend}>
+                            <Text style={styles.text}>{searchedFullName}</Text>
+                        </View>
+                    )
+                    resultsPendingIncoming.push(component);
+                }  else {
+                    const component = (
+                        <View key={searchedId} style={styles.friend}>
                             <Text style={styles.text}>{searchedFullName}</Text>
                             <Button onPress={() => handleAddFriend(searchedUser)} title="Add" />
                         </View>
@@ -53,6 +79,7 @@ const FriendsScreen = ({navigation, user}) => {
 
         setSearchedFriends(resultsFriends);
         setSearchedStrangers(resultsStrangers);
+        setSearchedPendingIncoming(resultsPendingIncoming);
     }
 
     const handleAddFriend = async (friend) => {
@@ -68,10 +95,10 @@ const FriendsScreen = ({navigation, user}) => {
 
     const handleCancelSearch = async () => {
         setSearchActive(false);
-        Keyboard.dismiss();
         setSearchedFriends([]);
         setSearchedStrangers([]);
         setSearchText('');
+        Keyboard.dismiss();
     }
     
     const handleRemoveFriend = async (friend) => {
@@ -117,6 +144,14 @@ const FriendsScreen = ({navigation, user}) => {
                     </View>
                 </> ) : (
                     <>
+                        {searchedPendingIncoming.length != 0 ? (
+                            <>
+                                <Text style={styles.text}>Added Me</Text>
+                                <View style={styles.friendsContainer}>
+                                    {searchedPendingIncoming}
+                                </View>
+                            </>
+                        ) : null} 
                         {searchedFriends.length != 0 ? (
                             <>
                                 <Text style={styles.text}>My Friends</Text>

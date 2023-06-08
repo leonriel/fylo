@@ -22,12 +22,13 @@ const HomeScreen = ({ navigation, sessions, user }) => {
     }
 
     const handleSessionCreation = async () => {
-        const newUser = await createSession(user.username, sessionName);
-
+        const newSession = await createSession(user._id, sessionName);
+        user.sessions.push(newSession._id);
         navigation.navigate('SessionsNavigator', {screen: 'Sessions'})
         setCreateSessionModalVisible(false);
-        reloadSessions(newUser.sessions);
         refreshUser(user.username);
+        reloadSessions(user.sessions);
+
     }
 
     return (

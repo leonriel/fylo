@@ -89,7 +89,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
             {
                 text: 'End',
                 onPress: async () => {
-                    const data = await endSession(user.username, session);
+                    const data = await endSession(user._id, session);
                     reloadSessions(user.sessions);
                     refreshUser(user.username);
                 }
