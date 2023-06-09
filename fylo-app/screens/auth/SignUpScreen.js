@@ -1,10 +1,10 @@
 import { useState, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, Button, Modal, Alert } from 'react-native';
 import { AuthContext } from '../../contexts/AuthContext';
+import { Auth } from 'aws-amplify';
 
 const SignUpScreen = ({ navigation }) => {
-    const { signUp, verifyUser } = useContext(AuthContext);
-
+    const { signIn } = useContext(AuthContext);
     const [username, setUsername] = useState(null);
     const [firstName, setFirstName] = useState(null);
     const [lastName, setLastName] = useState(null);
@@ -16,16 +16,41 @@ const SignUpScreen = ({ navigation }) => {
 
     const [modalVisible, setModalVisible] = useState(false);
 
-    const handleSignUp = () => {
-        signUp(username, firstName, lastName, email, phone, password);
-        setModalVisible(true);
+    const handleSignUp = async () => {
+        try {
+            const { user } = await Auth.signUp({
+                username: username.toLowerCase(),
+                password: password,
+                attributes: {
+                    email: email.toLowerCase(),
+                    phone_number: '+1' + phone,
+                    preferred_username: username.toLowerCase()
+                },
+                autoSignIn: {
+                    enabled: false
+                }
+            });
+            console.log(user);
+            setModalVisible(true);
+        } catch (error) {
+            console.log(error);
+        }
     }
     
-    const handleVerification = () => {
-        verifyUser(username, firstName, lastName, verificationCode);
-        setModalVisible(false);
-        navigation.navigate("Sign In");
-        return Alert.alert("You've been registered! Please sign in");
+    const handleVerification = async () => {
+        try {
+            await Auth.confirmSignUp(username.toLowerCase(), verificationCode);
+            await axios.post("https://fylo-app-server.herokuapp.com/user/create", {
+                username: username,
+                firstName: firstName,
+                lastName: lastName
+            });
+            setModalVisible(false);
+            navigation.navigate("Sign In");
+            return Alert.alert("You've been registered!");
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     return (
