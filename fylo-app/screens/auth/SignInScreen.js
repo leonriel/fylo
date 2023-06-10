@@ -2,7 +2,6 @@ import { useState, useContext } from 'react';
 import { SafeAreaView, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { AuthContext } from '../../contexts/AuthContext';
 
-
 const SignInScreen = ({ navigation }) => {
     const { signIn } = useContext(AuthContext)
     const [username, setUsername] = useState(null);

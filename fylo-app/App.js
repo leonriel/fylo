@@ -6,8 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { CognitoUserAttribute, AuthenticationDetails, CognitoUser } from 'amazon-cognito-identity-js';
-import * as AWS from 'aws-sdk/global';
+import { Amplify, Auth, Hub } from 'aws-amplify';
 
 import SignUpScreen from './screens/auth/SignUpScreen';
 import SignInScreen from './screens/auth/SignInScreen';
@@ -17,8 +16,7 @@ import FriendsScreen from './screens/FriendsScreen';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
-import { userPool } from './utils/UserPool';
-import { IDENTITY_POOL_ID, USER_POOL_ID } from '@env';
+import { IDENTITY_POOL_ID, USER_POOL_ID, CLIENT_ID } from '@env';
 
 import axios from 'axios';
 
@@ -27,6 +25,16 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 SplashScreen.preventAutoHideAsync();
+
+Amplify.configure({
+  Auth: {
+    region: "us-east-2",
+    identityPoolId: IDENTITY_POOL_ID,
+    userPoolId: USER_POOL_ID,
+    userPoolWebClientId: CLIENT_ID,
+    mandatorySignIn: true
+  }
+});
 
 export default function App() {
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -51,37 +59,18 @@ export default function App() {
 
   // First loading onto the app
   const getAuthSession = async () => {
-    userPool.storage.sync((err, result) => {
-        if (err) {
-            return Alert.alert(err.message || JSON.stringify(err));
-        };
-  
-        let cognitoUser = userPool.getCurrentUser();
-        if (cognitoUser != null) {
-            cognitoUser.getSession((err, session) => {
-                if (err) {
-                    // Alert.alert(err.message || JSON.stringify(err));
-                    return;
-                }
-                console.log('session validity: ' + session.isValid());
-  
-                let loginKey = 'cognito-idp.us-east-2.amazonaws.com/' + USER_POOL_ID;
-                let loginProvider = {}
-                loginProvider[loginKey] = session.getIdToken().getJwtToken()
-        
-                AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-                    IdentityPoolId: IDENTITY_POOL_ID, 
-                    Logins: loginProvider
-                });
-  
-                loadData(cognitoUser.getUsername());
-                setIsSignedIn(true);
-            });
-        }
+    Auth.currentAuthenticatedUser().then((user) => {
+      Auth.currentSession().then((data) => {
+        console.log(user.attributes)
+        loadData(user.attributes.preferred_username);
+        setIsSignedIn(true);
+      }).catch((error) => {
+        return
+      })
+    }).catch((error) => {
+      return
     });
   }
-
-  // Might want to migrate context methods somewhere else
 
   // SignUp / SignIn / SignOut functionalities
   const authContext = useMemo(
@@ -91,120 +80,36 @@ export default function App() {
           return Alert.alert('Invalid username or password combination.');
         }
 
-        let authData = {
-            Username: username,
-            Password: password
-        };
-
-        let authDetails = new AuthenticationDetails(authData);
-
-        let userData = {
-            Username: username,
-            Pool: userPool
-        }
-
-        let cognitoUser = new CognitoUser(userData);
-
-        cognitoUser.authenticateUser(authDetails, {
-            onSuccess: (result) => {
-                let accessToken = result.getAccessToken().getJwtToken();
-
-                let loginKey = 'cognito-idp.us-east-2.amazonaws.com/' + USER_POOL_ID;
-                let loginProvider = {}
-                loginProvider[loginKey] = result.getIdToken().getJwtToken()
-
-                AWS.config.region = 'us-east-2';
-                AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-                    IdentityPoolId: IDENTITY_POOL_ID,
-                    Logins: loginProvider
-                });
-
-                AWS.config.credentials.refresh(error => {
-                    if (error) {
-                        console.error(error);
-                    } else {
-                        // Instantiate aws sdk service objects now that the credentials have been updated.
-                        // example: var s3 = new AWS.S3();
-                        console.log('Successfully logged!');
-                        loadData(cognitoUser.getUsername());
-                        setIsSignedIn(true);
-                    }
-                });
-            },
-            onFailure: (err) => {
-                return Alert.alert(err.message || JSON.stringify(err));
-            }
-        })  
+        try {
+          const user = await Auth.signIn(username.toLowerCase(), password);
+          setIsSignedIn(true);
+          loadData(user.attributes.preferred_username);
+        } catch (error) {
+          console.log(error);
+        } 
       },
-      signOut: () => {
-        userPool.storage.sync((err, result) => {
-          if (err) return;
-
-          let cognitoUser = userPool.getCurrentUser();
-
-          if (cognitoUser != null) {
-              cognitoUser.signOut();
-              setIsSignedIn(false);
+      autoSignIn: async (username) => {
+        Hub.listen('auth', async ({ payload }) => {
+          const { event } = payload;
+          if (event == 'autoSignIn') {
+            const user = payload.data;
+            await Auth.updateUserAttributes(user, {
+              preferred_username: username
+            })
+            setIsSignedIn(true);
+            loadData(username);
+          } else if (event == 'autoSignIn_failure') {
+            return
           }
         })
       },
-      signUp: async (username, firstName, lastName, email, phone, password) => {
-        if (!username || !firstName || !lastName || !email || !phone || !password) {
-          return Alert.alert('Missing fields.');
+      signOut: async () => {
+        try {
+          await Auth.signOut();
+          setIsSignedIn(false);
+        } catch (error) {
+          console.log(error);
         }
-
-        let attributeList = [];
-
-        let dataEmail = {
-            Name: 'email',
-            Value: email.toLowerCase()
-        }
-    
-        let dataPhoneNumber = {
-            Name: 'phone_number',
-            Value: "+1" + phone
-        }
-    
-        let attributeEmail = new CognitoUserAttribute(dataEmail);
-        let attributePhoneNumber = new CognitoUserAttribute(dataPhoneNumber);
-    
-        attributeList.push(attributeEmail);
-        attributeList.push(attributePhoneNumber);
-        userPool.signUp(username, password, attributeList, null, function(
-            err,
-            result
-        ) {
-            if (err) {
-                return Alert.alert(err.message || JSON.stringify(err));
-            }
-            var cognitoUser = result.user;
-            console.log('user name is ' + cognitoUser.getUsername());
-        });
-      },
-      verifyUser: async (username, firstName, lastName, code) => {
-        let userData = {
-          Username: username,
-          Pool: userPool
-        };
-
-        let cognitoUser = new CognitoUser(userData);
-
-        cognitoUser.confirmRegistration(code, true, (err, result) => {
-          if (err) {
-            return Alert.alert(err.message || JSON.stringify(err));
-          }
-
-          // Create user in MongoDB when user has been verified
-          axios.post("https://fylo-app-server.herokuapp.com/user/create", {
-            username: username,
-            firstName: firstName,
-            lastName: lastName
-          }).then((resp) => {
-            console.log(resp.data.username);
-          });
-
-          console.log('call result: ' + result);
-        });
       },
       refreshUser: async (username) => {
         getUser(username);

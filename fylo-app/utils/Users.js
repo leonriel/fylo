@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-// Use MongoDB transactions instead
-
 export const getUsers = async (users) => {
     try {
         const res = await axios.post("https://fylo-app-server.herokuapp.com/user/getMany", {
