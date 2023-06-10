@@ -2,15 +2,19 @@ import { useState, useContext } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, Button, Modal, Alert } from 'react-native';
 import { AuthContext } from '../../contexts/AuthContext';
 import { Auth } from 'aws-amplify';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 const SignUpScreen = ({ navigation }) => {
-    const { signIn } = useContext(AuthContext);
+    const { autoSignIn } = useContext(AuthContext);
     const [username, setUsername] = useState(null);
+    const [uuid, setUuid] = useState(uuidv4());
     const [firstName, setFirstName] = useState(null);
     const [lastName, setLastName] = useState(null);
     const [email, setEmail] = useState(null);
-    const [phone, setPhone] = useState(null);
+    const [phoneNumber, setPhoneNumber] = useState(null);
     const [password, setPassword] = useState(null);
+    const [sub, setSub] = useState(null);
 
     const [verificationCode, setVerificationCode] = useState(null);
 
@@ -18,19 +22,21 @@ const SignUpScreen = ({ navigation }) => {
 
     const handleSignUp = async () => {
         try {
-            const { user } = await Auth.signUp({
-                username: username.toLowerCase(),
+            const { user, userSub } = await Auth.signUp({
+                username: uuid,
                 password: password,
                 attributes: {
                     email: email.toLowerCase(),
-                    phone_number: '+1' + phone,
+                    phone_number: '+1' + phoneNumber,
+                },
+                validationData: {
                     preferred_username: username.toLowerCase()
                 },
                 autoSignIn: {
-                    enabled: false
+                    enabled: true
                 }
             });
-            console.log(user);
+            setSub(userSub);
             setModalVisible(true);
         } catch (error) {
             console.log(error);
@@ -39,17 +45,35 @@ const SignUpScreen = ({ navigation }) => {
     
     const handleVerification = async () => {
         try {
-            await Auth.confirmSignUp(username.toLowerCase(), verificationCode);
-            await axios.post("https://fylo-app-server.herokuapp.com/user/create", {
-                username: username,
-                firstName: firstName,
-                lastName: lastName
-            });
+            await Auth.confirmSignUp(uuid, verificationCode, { forceAliasCreation: false });
+            // Might wanna put this in a lambda
+            try {
+                await axios.post("https://fylo-app-server.herokuapp.com/user/create", {
+                    username: username,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    phoneNumber: phoneNumber,
+                    cognitoUserSub: sub
+                });
+            } catch (error) {
+                console.log(error);
+            }
+            await autoSignIn(username.toLowerCase());
             setModalVisible(false);
             navigation.navigate("Sign In");
             return Alert.alert("You've been registered!");
         } catch (error) {
             console.log(error);
+        }
+    }
+
+    const handleResendVerificationCode = async () => {
+        try {
+            await Auth.resendSignUp(username.toLowerCase());
+            console.log('sent');
+        } catch (error) {
+            console.log(error)
         }
     }
 
@@ -64,7 +88,7 @@ const SignUpScreen = ({ navigation }) => {
             <Text>Email</Text>
             <TextInput style={styles.input} onChangeText={(text) => setEmail(text)} value={email} />
             <Text>Phone Number</Text>
-            <TextInput keyboardType="number-pad" style={styles.input} onChangeText={(text) => setPhone(text)} value={phone} />
+            <TextInput keyboardType="number-pad" style={styles.input} onChangeText={(text) => setPhoneNumber(text)} value={phoneNumber} />
             <Text>Password</Text>
             <TextInput secureTextEntry={true} style={styles.input} onChangeText={(text) => setPassword(text)} value={password} />
             <Button title="Sign Up" onPress={handleSignUp} />
@@ -78,6 +102,7 @@ const SignUpScreen = ({ navigation }) => {
                     <Text>Please input the verification code sent to your email</Text>
                     <TextInput keyboardType="number-pad" style={styles.input} onChangeText={(text) => setVerificationCode(text)} />
                     <Button title="Verify" onPress={handleVerification} />
+                    <Button title="Resend Code" onPress={handleResendVerificationCode} />
                     <Button title="Close" onPress={() => setModalVisible(false)} />
                 </SafeAreaView>
             </Modal>

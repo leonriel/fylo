@@ -61,7 +61,8 @@ export default function App() {
   const getAuthSession = async () => {
     Auth.currentAuthenticatedUser().then((user) => {
       Auth.currentSession().then((data) => {
-        loadData(user.getUsername());
+        console.log(user.attributes)
+        loadData(user.attributes.preferred_username);
         setIsSignedIn(true);
       }).catch((error) => {
         return
@@ -70,8 +71,6 @@ export default function App() {
       return
     });
   }
-
-  // Might want to migrate context methods somewhere else
 
   // SignUp / SignIn / SignOut functionalities
   const authContext = useMemo(
@@ -82,12 +81,27 @@ export default function App() {
         }
 
         try {
-          const user = await Auth.signIn(username, password);
+          const user = await Auth.signIn(username.toLowerCase(), password);
           setIsSignedIn(true);
-          loadData(user.getUsername());
+          loadData(user.attributes.preferred_username);
         } catch (error) {
           console.log(error);
         } 
+      },
+      autoSignIn: async (username) => {
+        Hub.listen('auth', async ({ payload }) => {
+          const { event } = payload;
+          if (event == 'autoSignIn') {
+            const user = payload.data;
+            await Auth.updateUserAttributes(user, {
+              preferred_username: username
+            })
+            setIsSignedIn(true);
+            loadData(username);
+          } else if (event == 'autoSignIn_failure') {
+            return
+          }
+        })
       },
       signOut: async () => {
         try {
