@@ -60,9 +60,6 @@ const SignUpScreen = ({ navigation }) => {
                 console.log(error);
             }
             await autoSignIn(username.toLowerCase());
-            setModalVisible(false);
-            navigation.navigate("Sign In");
-            return Alert.alert("You've been registered!");
         } catch (error) {
             console.log(error);
         }
