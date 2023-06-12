@@ -1,18 +1,24 @@
+import 'react-native-gesture-handler';
 import { useState, useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Alert, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { StyleSheet, Alert, Text, Dimensions, ActivityIndicator } from 'react-native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { Ionicons } from '@expo/vector-icons'; 
 
 import { Amplify, Auth, Hub } from 'aws-amplify';
 
-import SignUpScreen from './screens/auth/SignUpScreen';
+import LandingScreen from './screens/auth/LandingScreen';
 import SignInScreen from './screens/auth/SignInScreen';
+import NameScreen from './screens/auth/NameScreen';
+import ContactInfoScreen from './screens/auth/ContactInfoScreen';
+import CredentialsScreen from './screens/auth/CredentialsScreen';
+import VerificationScreen from './screens/auth/VerificationScreen';
 import HomeScreen from './screens/HomeScreen';
-import SessionsNavigator from './screens/SessionsNavigator';
-import FriendsScreen from './screens/FriendsScreen';
+import SessionsNavigator from './screens/sessions/SessionsNavigator';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
@@ -20,9 +26,9 @@ import { IDENTITY_POOL_ID, USER_POOL_ID, CLIENT_ID } from '@env';
 
 import axios from 'axios';
 
-const Stack = createNativeStackNavigator();
+const AuthStack = createStackNavigator();
 
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,6 +39,12 @@ Amplify.configure({
     userPoolId: USER_POOL_ID,
     userPoolWebClientId: CLIENT_ID,
     mandatorySignIn: true
+  },
+  Storage: {
+    AWSS3: {
+      bucket: 'fylo-photos',
+      region: 'us-east-2'
+    }
   }
 });
 
@@ -46,6 +58,13 @@ export default function App() {
     const prepare = async () => {
       try {
         await getAuthSession();
+        await Font.loadAsync({
+          "Quicksand-Light": require('./assets/Quicksand/static/Quicksand-Light.ttf'),
+          "Quicksand-Regular": require('./assets/Quicksand/static/Quicksand-Regular.ttf'),
+          "Quicksand-Medium": require('./assets/Quicksand/static/Quicksand-Medium.ttf'),
+          "Quicksand-SemiBold": require('./assets/Quicksand/static/Quicksand-SemiBold.ttf'),
+          "Quicksand-Bold": require('./assets/Quicksand/static/Quicksand-Bold.ttf'),
+        });
         await new Promise(resolve => setTimeout(resolve, 1500));
       } catch (error) {
         console.warn(error);
@@ -53,7 +72,6 @@ export default function App() {
         setAppIsReady(true);
       }
     }
-
     prepare();
   }, []);
 
@@ -61,7 +79,6 @@ export default function App() {
   const getAuthSession = async () => {
     Auth.currentAuthenticatedUser().then((user) => {
       Auth.currentSession().then((data) => {
-        console.log(user.attributes)
         loadData(user.attributes.preferred_username);
         setIsSignedIn(true);
       }).catch((error) => {
@@ -153,33 +170,59 @@ export default function App() {
     return null;
   }
 
+  const authScreenOptions = {
+    title: "",
+    headerStyle: {
+      backgroundColor: "white"
+    },
+    headerShadowVisible: false,
+    headerBackTitleVisible: false,
+    headerBackImage: () => <Ionicons name="chevron-back-outline" size={24} color="black" />
+  }
+
   return (
     <AuthContext.Provider value={authContext}>
-      <NavigationContainer onReady={onFinishedMounting}>
+      <StatusBar style="auto" />
+      <NavigationContainer onReady={onFinishedMounting} theme={{...DefaultTheme, colors: {...DefaultTheme.colors, background: "white"}}}>
           {isSignedIn ? (
             user ? (
             <SessionsContext.Provider value={sessionsContext}>
-              <Tab.Navigator initialRouteName='Home'>
-                <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} />
-                <Tab.Screen name="Home" children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} />
-                <Tab.Screen 
-                  name="SessionsNavigator" 
-                  options={{
-                    headerShown: false,
-                    title: "Sessions"
-                  }} 
-                  children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
-                />
+                <Tab.Navigator 
+                  initialRouteName='Home' 
+                  tabBarPosition='bottom' 
+                  initialLayout={{width: Dimensions.get('window').width}} 
+                  screenOptions={{
+                      tabBarShowLabel: false,
+                      tabBarShowIcon: false,
+                      swipeEnabled: true,
+                      tabBarStyle: {
+                          display: 'none'
+                      }
+                  }}
+                  >
+                  {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
+                  <Tab.Screen 
+                      name="Home" 
+                      children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
+                  />
+                  <Tab.Screen 
+                      name="SessionsNavigator" 
+                      children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
+                  />
               </Tab.Navigator>
             </SessionsContext.Provider>
             ) : (
-              <Text>This should be the splash screen!</Text>
+              <ActivityIndicator />
             )
           ) : (
-            <Stack.Navigator>
-              <Stack.Screen name="Sign In" component={SignInScreen} />
-              <Stack.Screen name="Sign Up" component={SignUpScreen} />
-            </Stack.Navigator>
+            <AuthStack.Navigator initialRoutName="Landing">
+              <AuthStack.Screen name="Landing" component={LandingScreen} options={{headerShown: false}} />
+              <AuthStack.Screen name="Sign In" component={SignInScreen} options={authScreenOptions} />
+              <AuthStack.Screen name="Sign Up 1" component={NameScreen} options={authScreenOptions} />
+              <AuthStack.Screen name="Sign Up 2" component={CredentialsScreen} options={authScreenOptions} />
+              <AuthStack.Screen name="Sign Up 3" component={ContactInfoScreen} options={authScreenOptions} />
+              <AuthStack.Screen name="Sign Up 4" component={VerificationScreen} options={authScreenOptions} />
+            </AuthStack.Navigator>
           )
           }
       </NavigationContainer>

@@ -1,24 +1,39 @@
 import { useState, useContext } from 'react';
-import { SafeAreaView, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import Input from '../../components/Input';
+import Button from'../../components/Button';
 import { AuthContext } from '../../contexts/AuthContext';
 
 const SignInScreen = ({ navigation }) => {
     const { signIn } = useContext(AuthContext)
     const [username, setUsername] = useState(null);
     const [password, setPassword] = useState(null);
+    const [activityIndicator, setActivityIndicator] = useState(false);
 
-    const onLogin = () => {
-        signIn(username, password);
+    const handleSignIn = async () => {
+        setActivityIndicator(true);
+        await signIn(username, password);
+        setActivityIndicator(false);
     }
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text>Username</Text>
-            <TextInput style={styles.input} onChangeText={(text) => setUsername(text)} value={username} />
-            <Text>Password</Text>
-            <TextInput secureTextEntry={true} style={styles.input} onChangeText={(text) => setPassword(text)} value={password} />
-            <Button title="Login" onPress={onLogin} />
-            <Button title="New? Sign Up" onPress={() => navigation.navigate('Sign Up')} />
+            <Text style={styles.title}>Sign In</Text>
+            <Input label="USERNAME, EMAIL, OR PHONE" width="80%" value={username} handler={(text) => setUsername(text)} secureTextEntry={false} />
+            <Input label="PASSWORD" width="80%" value={password} handler={(text) => setPassword(text)} secureTextEntry={true} />
+            <Button     
+                borderRadius="25%"
+                backgroundColor="#E8763A"
+                height={30}
+                aspectRatio={"3/1"}
+                fontFamily="Quicksand-SemiBold"
+                fontSize={16}
+                fontColor="white"
+                text="Sign In"
+                margin={24}
+                handler={handleSignIn}
+            />
+            {activityIndicator && <ActivityIndicator />}
         </SafeAreaView>
     );
 }
@@ -26,23 +41,14 @@ const SignInScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'center',
-        margin: 8
+        alignItems: "center"
     },
-    input: {
-        width: '80%',
-        borderBottomWidth: 1,
-        borderTopWidth: 1,
-        borderRightWidth: 1,
-        borderLeftWidth: 1,
-        borderTopRightRadius: 5,
-        borderTopLeftRadius: 5,
-        borderBottomRightRadius: 5,
-        borderBottomLeftRadius: 5,
-        margin: 8,
-        padding: 8,
-        fontSize: 16
-    },
+    title: {
+        fontFamily: "Quicksand-Regular",
+        fontSize: 24,
+        marginBottom: 32,
+        marginTop: 32
+    }
 });
 
 export default SignInScreen;
