@@ -8,8 +8,8 @@
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "resizeMode": "cover",
+      "backgroundColor": "#f0f8ff"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -18,8 +18,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The Fylo accesses your photos to let you share them with your friends.",
+          "photosPermission": "Fylo accesses your photos to let you share them with your friends.",
           "cameraPermission": "Allow Fylo to access your camera."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Fylo to access your camera." 
         }
       ]
     ],

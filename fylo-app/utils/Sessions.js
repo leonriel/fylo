@@ -3,12 +3,16 @@ import axios from 'axios';
 // Use MongoDB transactions instead
 
 export const createSession = async (userId, sessionName) => {
-    const resp = await axios.post("https://fylo-app-server.herokuapp.com/session/create", {
-        name: sessionName,
-        owner: userId
-    });
-
-    return resp.data;
+    try {
+        const resp = await axios.post("https://fylo-app-server.herokuapp.com/session/create", {
+            name: sessionName,
+            owner: userId
+        });
+    
+        return resp.data;
+    } catch (error) {
+        console.log(error.message);
+    }
 }
 
 export const endSession = async (userId, session) => {

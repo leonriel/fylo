@@ -1,14 +1,14 @@
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createStackNavigator } from "@react-navigation/stack";
 import { Button, Text } from 'react-native';
 import SessionsScreen from './SessionsScreen';
 import PhotosScreen from './PhotosScreen';
 
 const SessionsNavigator = ({ navigation, sessions, user }) => {
-    const Stack = createNativeStackNavigator();
+    const Stack = createStackNavigator();
 
     return (
         <Stack.Navigator>
-            <Stack.Screen name="Sessions" children={(props) => <SessionsScreen {...props} sessions={sessions} user={user} />} />
+            <Stack.Screen name="Sessions" children={(props) => <SessionsScreen {...props} sessions={sessions} user={user} />} options={{headerShown: false}}/>
             {sessions.map(session => {
                 return <Stack.Screen 
                     name={session._id} 
