@@ -19,6 +19,7 @@ import CredentialsScreen from './screens/auth/CredentialsScreen';
 import VerificationScreen from './screens/auth/VerificationScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionsNavigator from './screens/sessions/SessionsNavigator';
+import PlaygroundScreen from './screens/PlaygroundScreen';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
@@ -192,21 +193,25 @@ export default function App() {
                   tabBarPosition='bottom' 
                   initialLayout={{width: Dimensions.get('window').width}} 
                   screenOptions={{
-                      tabBarShowLabel: false,
-                      tabBarShowIcon: false,
+                      // tabBarShowLabel: false,
+                      // tabBarShowIcon: false,
                       swipeEnabled: true,
                       tabBarStyle: {
-                          display: 'none'
+                          // display: 'none'
                       }
                   }}
                   >
                   {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
                   <Tab.Screen 
+                      name="Playground"
+                      children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
+                  />
+                  <Tab.Screen 
                       name="Home" 
                       children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
                   />
                   <Tab.Screen 
-                      name="SessionsNavigator" 
+                      name="Sessions Navigator" 
                       children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
                   />
               </Tab.Navigator>
