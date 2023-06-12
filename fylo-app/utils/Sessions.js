@@ -26,6 +26,6 @@ export const endSession = async (userId, session) => {
 
         return resp.data;
     } catch (error) {
-        return Alert.alert(error.message);
+        return console.log(error.message);
     } 
 }

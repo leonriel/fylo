@@ -150,6 +150,9 @@ const PhotosScreen = ({ navigation, session, user }) => {
             {
                 text: 'End',
                 onPress: async () => {
+                    if (user._id != session.owner) {
+                        return Alert.alert("User does not have permission to end this session.")
+                    }
                     const data = await endSession(user._id, session);
                     reloadSessions(user.sessions);
                     refreshUser(user.username);
