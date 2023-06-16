@@ -14,7 +14,7 @@ export const getUsers = async (users) => {
 
 export const searchUsers = async (query) => {
     try {
-        const res = await axios.post("https://fylo-app-server.herokuapp.com/user/globalSearch", {
+        const res = await axios.post("https://fylo-app-server.herokuapp.com/user/search", {
             query: query
         });
 

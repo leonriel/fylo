@@ -22,7 +22,7 @@ const NameScreen = ({navigation}) => {
                 fontColor="white"
                 text="Continue"
                 margin={24}
-                handler={() => navigation.navigate('Sign Up 2', {firstName: firstName, lastName: lastName})}
+                handler={() => navigation.navigate('Sign Up 2', {firstName: firstName.trim(), lastName: lastName.trim()})}
             />
 
         </SafeAreaView>

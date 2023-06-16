@@ -1,7 +1,11 @@
-import 'react-native-gesture-handler';
+import 'react-native-gesture-handler'; // Required for react-navigation
+import 'react-native-url-polyfill/auto'; // Required for AWS Cognito (Amplify Auth)
+import 'react-native-get-random-values'; // Required for AWS Cognito (Amplify Auth)
+
 import { useState, useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Alert, Text, Dimensions, ActivityIndicator } from 'react-native';
+import { StyleSheet, Alert, Dimensions, ActivityIndicator, SafeAreaView, Pressable, Text,View } from 'react-native';
+import { Image } from 'expo-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -20,6 +24,7 @@ import VerificationScreen from './screens/auth/VerificationScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionsNavigator from './screens/sessions/SessionsNavigator';
 import PlaygroundScreen from './screens/PlaygroundScreen';
+import ProfileIcon from './components/ProfileIcon';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
@@ -190,21 +195,31 @@ export default function App() {
             <SessionsContext.Provider value={sessionsContext}>
                 <Tab.Navigator 
                   initialRouteName='Home' 
-                  tabBarPosition='bottom' 
+                  // tabBarPosition='bottom' 
                   initialLayout={{width: Dimensions.get('window').width}} 
+                  tabBar={({navigation}) => {
+                    return (<SafeAreaView>
+                      <View style={styles.header}>
+                        {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Playground")}>
+                          <ProfileIcon firstName={user.firstName} lastName={user.lastName} />
+                        </Pressable>}
+                        <Image style={styles.logo} source={require('./assets/logo-black.png')} />
+                        {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
+                          <Ionicons name="albums-outline" size={24} color="black" />                        
+                        </Pressable>}
+                      </View>
+                  </SafeAreaView>)}}
                   screenOptions={{
-                      // tabBarShowLabel: false,
-                      // tabBarShowIcon: false,
                       swipeEnabled: true,
-                      tabBarStyle: {
-                          // display: 'none'
-                      }
                   }}
                   >
                   {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
                   <Tab.Screen 
                       name="Playground"
                       children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
+                      options={{
+                        header: () => <Text>Hi</Text>
+                      }}
                   />
                   <Tab.Screen 
                       name="Home" 
@@ -242,4 +257,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  header: {
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "center",
+    alignSelf: "center", 
+    width: "90%",
+    height: 25
+  },
+  logo: {
+      height: 25, 
+      aspectRatio: "228/76",
+      marginRight: 'auto',
+      marginLeft: 'auto'
+  }
 });

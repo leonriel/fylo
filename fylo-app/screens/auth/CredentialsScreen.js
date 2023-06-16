@@ -29,7 +29,7 @@ const CredentialsScreen = ({route, navigation}) => {
         navigation.navigate('Sign Up 3', {
             firstName: route.params.firstName,
             lastName: route.params.lastName,
-            username: username.toLowerCase(),
+            username: username.trim().toLowerCase(),
             password: password
         })
     }

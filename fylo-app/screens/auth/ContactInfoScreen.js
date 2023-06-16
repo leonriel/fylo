@@ -35,7 +35,7 @@ const ContactInfoScreen = ({route, navigation}) => {
                 lastName: lastName,
                 username: username,
                 cognitoUsername: uuid,
-                email: email.toLowerCase(),
+                email: email.trim().toLowerCase(),
                 phoneNumber: phoneNumber,
                 cognitoUserSub: userSub
             })

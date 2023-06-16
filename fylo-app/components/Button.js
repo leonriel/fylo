@@ -20,10 +20,7 @@ const Button = ({borderRadius, backgroundColor, margin, height, aspectRatio, fon
                 backgroundColor: backgroundColor,
                 height: height,
                 aspectRatio: aspectRatio,
-                borderBottomLeftRadius: borderRadius,
-                borderTopLeftRadius: borderRadius,
-                borderTopRightRadius: borderRadius,
-                borderBottomRightRadius: borderRadius,
+                borderRadius: borderRadius,
                 margin: margin
             }}>
                 <Text style={{

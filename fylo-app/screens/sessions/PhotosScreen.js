@@ -6,6 +6,8 @@ import { endSession } from '../../utils/Sessions';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SessionsContext } from '../../contexts/SessionsContext';
 import { searchUsers } from '../../utils/Users';
+import Input from '../../components/Input';
+import UserListItem from '../../components/UserListItem';
 import { Storage } from 'aws-amplify';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -15,7 +17,8 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [photos, setPhotos] = useState([]);
     const [actionsModalVisible, setActionsModalVisible] = useState(false);
     const [inviteModalVisible, setInviteModalVisible] = useState(false);
-    const [friends, setFriends] = useState([]);
+    const [searchedUsers, setSearchedUsers] = useState([]);
+    const [query, setQuery] = useState('');
 
     useEffect(() => {
         navigation.setOptions({
@@ -135,10 +138,10 @@ const PhotosScreen = ({ navigation, session, user }) => {
         }
     }
 
-    const handleSearchFriends = async (query) => {
+    const handleSearchUsers = async (query) => {
         const searchedUsers = await searchUsers(query);
 
-        setFriends(searchedUsers);
+        setSearchedUsers(searchedUsers);
     }
 
     const handleEndSession = async () => (
@@ -216,8 +219,10 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                     onRequestClose={() => setInviteModalVisible(false)}
                                 >
                                     <SafeAreaView style={styles.container}>
-                                        <TextInput style={styles.input} onChangeText={(text) => handleSearchFriends(text)} />
-                                        {friends.map(friend => <Text key={friend.username} style={styles.text}>{friend.firstName + " " + friend.lastName}</Text>)}
+                                        <Input label="Search" width="80%" handler={(text) => handleSearchUsers(text)} />
+                                        {searchedUsers ? searchedUsers.map(searchedUser => (
+                                            <UserListItem key={searchedUser.username} firstName={searchedUser.firstName} lastName={searchedUser.lastName} fullName={searchedUser.fullName} username={searchedUser.username} />
+                                        )) : null}
                                         <Button title="Close" onPress={() => setInviteModalVisible(false)} />
                                     </SafeAreaView>
                                 </Modal>
@@ -239,14 +244,7 @@ const styles = StyleSheet.create({
     },
     input: {
         width: '80%',
-        borderBottomWidth: 1,
-        borderTopWidth: 1,
-        borderRightWidth: 1,
-        borderLeftWidth: 1,
-        borderTopRightRadius: 5,
-        borderTopLeftRadius: 5,
-        borderBottomRightRadius: 5,
-        borderBottomLeftRadius: 5,
+        borderWidth: 1,
         margin: 8,
         padding: 8,
         fontSize: 16
