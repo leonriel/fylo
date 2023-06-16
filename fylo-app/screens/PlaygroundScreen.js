@@ -23,7 +23,7 @@ const PlaygroundScreen = ({user, sessions}) => {
         return(
             <Pressable onPress={onPress} style={{...styles.button, margin: margin}}>
                 <Entypo name={icon} color = {color} size = {size} />
-                <Text style={{marginLeft: 10, fontWeight: 'bold', fontSize: '20', color: "#fff"}}>{text}</Text>
+                <Text style={{marginLeft: 10, fontWeight: 'bold', fontSize: 20, color: "#fff"}}>{text}</Text>
             </Pressable>
         )
     }
