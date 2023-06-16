@@ -61,21 +61,21 @@ const PlaygroundScreen = ({user, sessions}) => {
                 ref={(r) => {camera = r}}
             >
                 <View style={{flex: 1, alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', margin: 30}}>
-                    <Button icon = 'flash' size = '30' color = {flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
+                    <Button icon='flash' size='30' color={flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
                     onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
                         Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off
                     )}}
                     />
-                    <Button onPress={toggleCameraType} icon = 'swap' color = '#fff' size='30' margin={10}/> 
+                    <Button onPress={toggleCameraType} icon='swap' color='#fff' size='30' margin={10}/> 
                 </View>
                 <View style = {styles.buttonContainer}> 
-                    <Button onPress={takePicture} icon = 'circle' color ='#fff' size='80' margin={10} />    
+                    <Button onPress={takePicture} icon='circle' color ='#fff' size='80' margin={10} />    
                 </View> 
             </Camera> :
             <View style={styles.camera}>
                 <ImageBackground source={{uri: image}} style={styles.camera}>
                     <View style={styles.buttonContainer}>
-                        <Button onPress={() => {setImage(null)}} icon = 'retweet' color = '#fff' size = '30' text = 'Retake?'/>
+                        <Button onPress={() => {setImage(null)}} icon='retweet' color='#fff' size='30' text='Retake?'/>
                     </View>
                 </ImageBackground>
             </View>
