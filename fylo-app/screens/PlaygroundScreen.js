@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { Camera, CameraType } from 'expo-camera';
 import { useState, useEffect, useRef } from 'react';
-import { Button, StyleSheet, Text, Pressable, View, ImageBackground } from 'react-native';
+import { Button, StyleSheet, Text, Pressable, View, SafeAreaView, ImageBackground } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
 
 let camera = Camera
@@ -66,10 +66,10 @@ const PlaygroundScreen = ({user, sessions}) => {
                         Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off
                     )}}
                     />
-                    <Button onPress={toggleCameraType} icon='swap' color='#fff' size='30' margin={10}/> 
+                    <Button onPress={toggleCameraType} icon='swap' color='#fff' size='30' /> 
                 </View>
                 <View style = {styles.buttonContainer}> 
-                    <Button onPress={takePicture} icon='circle' color ='#fff' size='80' margin={10} />    
+                    <Button onPress={takePicture} icon='circle' color ='#fff' size='80' />    
                 </View> 
             </Camera> :
             <View style={styles.camera}>
