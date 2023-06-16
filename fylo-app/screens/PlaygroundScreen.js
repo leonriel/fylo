@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View, ImageBackground } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
 
-let camera: Camera
+let camera = Camera
 
 const PlaygroundScreen = ({user, sessions}) => {
     const [type, setType] = useState(CameraType.back);
@@ -62,7 +62,7 @@ const PlaygroundScreen = ({user, sessions}) => {
             >
                 <View style={{flex: 1, alignItems: 'flex-start', justifyContent: 'flex-start', marginTop: 30, marginLeft: 30}}>
                     <Button icon = 'flash' size = '30' color = {flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
-                    onpress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
+                    onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
                         Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off
                     )}}
                     />
