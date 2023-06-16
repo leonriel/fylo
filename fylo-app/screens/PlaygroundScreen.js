@@ -60,7 +60,7 @@ const PlaygroundScreen = ({user, sessions}) => {
                 flashMode={flash}
                 ref={(r) => {camera = r}}
             >
-                <View style={{flex: 1, alignItems: 'flex-end', justifyContent: 'flex-start', marginTop: 30, marginRight: 30}}>
+                <View style={{flex: 1, alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', margin: 30}}>
                     <Button icon = 'flash' size = '30' color = {flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
                     onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
                         Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off
@@ -69,7 +69,7 @@ const PlaygroundScreen = ({user, sessions}) => {
                     <Button onPress={toggleCameraType} icon = 'swap' color = '#fff' size='30' margin={10}/> 
                 </View>
                 <View style = {styles.buttonContainer}> 
-                    <Button onPress={takePicture} icon = 'circle' color ='#fff' size='50' margin={10} />    
+                    <Button onPress={takePicture} icon = 'circle' color ='#fff' size='80' margin={10} />    
                 </View> 
             </Camera> :
             <View style={styles.camera}>
