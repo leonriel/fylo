@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { Camera, CameraType } from 'expo-camera';
 import { useState, useEffect, useRef } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View, ImageBackground } from 'react-native';
+import { Button, StyleSheet, Text, Pressable, View, ImageBackground } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
 
 let camera = Camera
@@ -21,10 +21,10 @@ const PlaygroundScreen = ({user, sessions}) => {
 
     const Button = ({onPress, icon, color, size, text, margin}) => {
         return(
-            <TouchableOpacity onPress={onPress} style={{...styles.button, margin: margin}}>
+            <Pressable onPress={onPress} style={{...styles.button, margin: margin}}>
                 <Entypo name={icon} color = {color} size = {size} />
                 <Text style={{marginLeft: 10, fontWeight: 'bold', fontSize: '20', color: "#fff"}}>{text}</Text>
-            </TouchableOpacity>
+            </Pressable>
         )
     }
 
@@ -60,16 +60,16 @@ const PlaygroundScreen = ({user, sessions}) => {
                 flashMode={flash}
                 ref={(r) => {camera = r}}
             >
-                <View style={{flex: 1, alignItems: 'flex-start', justifyContent: 'flex-start', marginTop: 30, marginLeft: 30}}>
+                <View style={{flex: 1, alignItems: 'flex-end', justifyContent: 'flex-start', marginTop: 30, marginRight: 30}}>
                     <Button icon = 'flash' size = '30' color = {flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
                     onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
                         Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off
                     )}}
                     />
+                    <Button onPress={toggleCameraType} icon = 'swap' color = '#fff' size='30' margin={10}/> 
                 </View>
-                <View style = {styles.buttonContainer}>
-                    <Button onPress={toggleCameraType} icon = 'swap' color = '#fff' size='30' margin={10} />  
-                    <Button onPress={takePicture} icon = 'camera' color ='#fff' size='50' margin={10} />    
+                <View style = {styles.buttonContainer}> 
+                    <Button onPress={takePicture} icon = 'circle' color ='#fff' size='50' margin={10} />    
                 </View> 
             </Camera> :
             <View style={styles.camera}>
