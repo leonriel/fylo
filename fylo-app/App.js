@@ -205,7 +205,7 @@ export default function App() {
                         </Pressable>}
                         <Image style={styles.logo} source={require('./assets/logo-black.png')} />
                         {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
-                          <Ionicons name="albums-outline" size={24} color="black" />                        
+                          <Ionicons name="albums-outline" size={30} color="black" />                        
                         </Pressable>}
                       </View>
                   </SafeAreaView>)}}
@@ -263,10 +263,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center", 
     width: "90%",
-    height: 25
+    height: 30
   },
   logo: {
-      height: 25, 
+      height: 30, 
       aspectRatio: "228/76",
       marginRight: 'auto',
       marginLeft: 'auto'
