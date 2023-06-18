@@ -82,12 +82,7 @@ const PlaygroundScreen = ({ user, sessions }) => {
               .sort((a, b) => {
                 return (
                   b.isActive - a.isActive ||
-                  b.convertDate(b.updatedAt).getFullYear() -
-                    a.convertDate(a.updatedAt).getFullYear() ||
-                  b.convertDate(b.updatedAt).getMonth() -
-                    a.convertDate(a.updatedAt).getMonth() ||
-                  b.convertDate(b.updatedAt).getDay() -
-                    a.convertDate(a.updatedAt).getDay()
+                  b.getTime() - a.getTime()
                 );
               })
               .filter(
