@@ -10,9 +10,31 @@ import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { ScrollView } from "react-native-gesture-handler";
+import {
+  Entypo,
+  Ionicons,
+  MaterialIcons,
+  FontAwesome,
+  Feather,
+  FontAwesome5,
+} from "@expo/vector-icons";
 
 const PlaygroundScreen = ({ user, sessions }) => {
   const [playgroundSessions, setPlaygroundSessions] = useState(sessions);
+  const [searchText, setSearchText] = useState("");
+
+  function searchInputHandler(enteredText) {
+    setSearchText(enteredText.toLowerCase());
+  }
+
+  function convertDate(dbDate) {
+    const date = new Date(dbDate);
+    return date;
+  }
+
+  function formatDate(convertedDate) {
+    return convertedDate.toString().substring(4, 10);
+  }
 
   return (
     <>
@@ -20,7 +42,8 @@ const PlaygroundScreen = ({ user, sessions }) => {
       <SafeAreaView style={styles.container}>
         <SafeAreaView style={styles.headerContainer}>
           <Pressable style={({ pressed }) => pressed && styles.pressedItem}>
-            <Text style={styles.headerText}>Home</Text>
+            <Entypo name="home" size={40} color="white" />
+            {/* <Text style={styles.headerText}>Home</Text> */}
           </Pressable>
           <Image
             resizeMode="contain"
@@ -28,62 +51,119 @@ const PlaygroundScreen = ({ user, sessions }) => {
             source={require("../assets/icon.png")}
           />
           <Pressable style={({ pressed }) => pressed && styles.pressedItem}>
-            <Text style={styles.headerText}>Camera</Text>
+            <Ionicons name="camera-outline" size={40} color="white" />
+            {/* <Text style={styles.headerText}>Camera</Text> */}
           </Pressable>
         </SafeAreaView>
         <SafeAreaView style={styles.subHeaderContainer}>
           <Text style={styles.headerText}>Albums</Text>
           <Pressable style={({ pressed }) => pressed && styles.pressedItem}>
-            <Text style={styles.headerText}>Sort</Text>
+            <MaterialIcons name="sort" size={40} color="white" />
+            {/* <Text style={styles.headerText}>Sort</Text> */}
           </Pressable>
         </SafeAreaView>
-        <TextInput style={styles.searchBar} placeholder="Search" />
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Search"
+          onChangeText={searchInputHandler}
+        />
+        <FontAwesome
+          name="search"
+          style={styles.searchIcon}
+          size={33}
+          color="#58b7b5"
+        />
         <SafeAreaView>
           <ScrollView
             contentContainerStyle={styles.sessionsContainer}
             alwaysBounceVertical={true}
           >
-            {playgroundSessions.map((session) => (
-              <SafeAreaView key={session._id} style={styles.sessionCard}>
-                <Pressable
-                  style={({ pressed }) => pressed && styles.pressedItem}
-                >
-                  <ImageBackground
-                    imageStyle={styles.sessionImage}
-                    style={styles.sessionCard}
-                    source={require("../assets/icon.png")}
+            {playgroundSessions
+              .sort((a, b) => {
+                return (
+                  b.isActive - a.isActive ||
+                  b.convertDate(b.updatedAt).getFullYear() -
+                    a.convertDate(a.updatedAt).getFullYear() ||
+                  b.convertDate(b.updatedAt).getMonth() -
+                    a.convertDate(a.updatedAt).getMonth() ||
+                  b.convertDate(b.updatedAt).getDay() -
+                    a.convertDate(a.updatedAt).getDay()
+                );
+              })
+              .filter(
+                (session) => session.name.toLowerCase().indexOf(searchText) > -1
+              )
+              .map((session) => (
+                <SafeAreaView key={session._id} style={styles.sessionCard}>
+                  <Pressable
+                    style={({ pressed }) => pressed && styles.pressedItem}
                   >
-                    <SafeAreaView style={styles.sessionActivityContainer}>
-                      <Image
+                    <ImageBackground
+                      imageStyle={styles.sessionImage}
+                      style={styles.sessionCard}
+                      source={require("../assets/icon.png")}
+                    >
+                      <SafeAreaView
+                        style={[
+                          styles.sessionActivityContainer,
+                          !session.isActive && styles.invisible,
+                        ]}
+                      >
+                        {/* <Image
                         style={styles.sessionActiveIcon}
                         source={require("../assets/favicon.png")}
-                      />
-                      <Text style={[styles.sessionActivityText, { flex: 5 }]}>
-                        Currently Active
-                      </Text>
-                      <Text style={styles.sessionActivityText}>Exit</Text>
-                    </SafeAreaView>
-                    <SafeAreaView style={styles.sessionInfoContainer}>
-                      <Text style={[styles.sessionInfoText, { flex: 1 }]}>
-                        {session.name}
-                      </Text>
-                      <SafeAreaView style={styles.numContributorsContainer}>
-                        <Text style={[styles.numContributorsText, { flex: 1 }]}>
-                          Num
-                        </Text>
-                        <Image
-                          style={styles.numContributorsIcon}
-                          source={require("../assets/favicon.png")}
+                      /> */}
+                        <Feather
+                          name="radio"
+                          style={styles.sessionActiveIcon}
+                          size={25}
+                          color="white"
                         />
+                        <Text style={[styles.sessionActivityText, { flex: 5 }]}>
+                          Currently Active
+                        </Text>
+                        <Pressable
+                          style={({ pressed }) =>
+                            pressed
+                              ? [
+                                  styles.pressedItem,
+                                  styles.exitActiveSessionIcon,
+                                ]
+                              : styles.exitActiveSessionIcon
+                          }
+                        >
+                          <Ionicons
+                            name="exit-outline"
+                            style={styles.exitActiveSessionIcon}
+                            size={23}
+                            color="white"
+                          />
+                        </Pressable>
+                        {/* <Text style={styles.sessionActivityText}>Exit</Text> */}
                       </SafeAreaView>
-                      <Text style={[styles.sessionInfoText, { flex: 1 }]}>
-                        Date | # Pics
-                      </Text>
-                    </SafeAreaView>
-                  </ImageBackground>
-                </Pressable>
-              </SafeAreaView>
-            ))}
+                      <SafeAreaView style={styles.sessionInfoContainer}>
+                        <Text style={styles.sessionNameText}>
+                          {session.name}
+                        </Text>
+                        <SafeAreaView style={styles.numContributorsContainer}>
+                          <Text style={styles.numContributorsText}>
+                            {session.contributors.length}
+                          </Text>
+                          <FontAwesome5
+                            name="user-friends"
+                            style={styles.numContributorsIcon}
+                            size={14}
+                            color="white"
+                          />
+                        </SafeAreaView>
+                        <Text style={styles.sessionInfoText}>
+                          {formatDate(convertDate(session.updatedAt))} | #
+                        </Text>
+                      </SafeAreaView>
+                    </ImageBackground>
+                  </Pressable>
+                </SafeAreaView>
+              ))}
           </ScrollView>
         </SafeAreaView>
       </SafeAreaView>
@@ -98,34 +178,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#58b7b5",
   },
+  invisible: {
+    opacity: 0,
+  },
   headerContainer: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-between",
     marginTop: "15%",
-    marginHorizontal: 16,
+    marginHorizontal: "3%",
   },
   subHeaderContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginHorizontal: 11,
+    marginHorizontal: "3%",
   },
   pressedItem: {
     opacity: 0.5,
   },
   headerText: {
-    fontFamily: "Quicksand-Regular",
+    fontFamily: "Quicksand-Bold",
     fontWeight: "bold",
     fontSize: 24,
     color: "white",
   },
   logo: {
     width: "50%",
-    height: "90%",
+    height: "70%",
     marginHorizontal: 16,
     marginTop: 4,
   },
+  searchIcon: {
+    position: "absolute",
+    top: "20.1%",
+    left: "7%",
+  },
   searchBar: {
     margin: 10,
+    marginBottom: 4,
     backgroundColor: "white",
     height: "6%",
     borderRadius: 30,
@@ -167,11 +256,17 @@ const styles = StyleSheet.create({
   sessionActiveIcon: {
     flex: 1,
     height: "100%",
-    resizeMode: "contain",
-    marginRight: "-4%",
+    // resizeMode: "contain",
+    marginRight: "-8.5%",
+    marginLeft: "4%",
+    marginTop: "1%",
+  },
+  exitActiveSessionIcon: {
+    marginTop: "1%",
+    marginRight: "1.5%",
   },
   sessionInfoContainer: {
-    marginVertical: "14.5%",
+    marginVertical: "14.2%",
     backgroundColor: "rgba(121, 160, 212, 0.5)",
     flexDirection: "row",
     justifyContent: "space-between",
@@ -180,35 +275,50 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 12,
     height: "405%",
   },
-  sessionInfoText: {
-    fontFamily: "Quicksand-Regular",
+  sessionNameText: {
+    fontFamily: "Quicksand-Bold",
     fontWeight: "bold",
     fontSize: 20,
     color: "white",
     margin: "2%",
     marginBottom: "0%",
     marginTop: "1%",
+    marginRight: "8%",
+    // flex: "auto",
+    // backgroundColor: "red",
   },
-  numContributorsText: {
-    fontFamily: "Quicksand-Regular",
+  sessionInfoText: {
+    fontFamily: "Quicksand-Bold",
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: 20,
     color: "white",
-    marginTop: "14%",
+    margin: "2%",
     marginBottom: "0%",
+    marginTop: "1%",
+    // backgroundColor: "red",
   },
   numContributorsContainer: {
-    marginLeft: "-5%",
+    marginLeft: "-4%",
     marginTop: "-2%",
     flex: 1,
     flexDirection: "row",
-    // alignContent: "flex-start",
+    // backgroundColor: "red",
+    // justifyContent: "flex-start",
+  },
+  numContributorsText: {
+    fontFamily: "Quicksand-Bold",
+    fontWeight: "bold",
+    fontSize: 14,
+    color: "white",
+    marginTop: 16.3,
+    // marginBottom: "2%",
+    // flex: 1,
   },
   numContributorsIcon: {
-    flex: 1,
+    // flex: 1,
     height: "60%",
-    resizeMode: "contain",
-    marginLeft: "-130%",
-    marginTop: "10%",
+    // resizeMode: "contain",
+    marginLeft: "4%",
+    marginTop: 17.3,
   },
 });
