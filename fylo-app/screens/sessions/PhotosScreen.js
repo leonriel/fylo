@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
-import { SafeAreaView, FlatList, View, TouchableOpacity, Button, Alert, Modal, StyleSheet, TextInput, Text } from 'react-native';
+import { SafeAreaView, FlatList, View, TouchableOpacity, Button, Alert, Modal, StyleSheet, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { endSession } from '../../utils/Sessions';
@@ -10,6 +10,8 @@ import Input from '../../components/Input';
 import UserListItem from '../../components/UserListItem';
 import { Storage } from 'aws-amplify';
 import { v4 as uuidv4 } from 'uuid';
+import { CLOUDFRONT_DOMAIN } from '@env';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const PhotosScreen = ({ navigation, session, user }) => {
     const { refreshUser } = useContext(AuthContext);
@@ -18,12 +20,13 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [actionsModalVisible, setActionsModalVisible] = useState(false);
     const [inviteModalVisible, setInviteModalVisible] = useState(false);
     const [searchedUsers, setSearchedUsers] = useState([]);
-    const [query, setQuery] = useState('');
 
     useEffect(() => {
         navigation.setOptions({
             headerRight: () => (
-                <Button title="Actions" onPress={() => setActionsModalVisible(true)} />
+                <Pressable onPress={() => setActionsModalVisible(true)}>
+                    <MaterialCommunityIcons name="dots-vertical" size={30} color="black" />               
+                </Pressable>
             )
         })
         loadPhotos();
@@ -37,7 +40,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                     download: true,
                     progressCallback: (progress) => {
                         console.log(progress.loaded / progress.total)
-                    } 
+                    }
                 });
                 photo = await blobToBase64(photo.Body);
                 return photo;
@@ -60,6 +63,13 @@ const PhotosScreen = ({ navigation, session, user }) => {
             })
         })
 
+        // const imgComponents = results.map((res, index) => {
+        //     return ({
+        //         id: index,
+        //         uri: `${CLOUDFRONT_DOMAIN}/public/${res.key}`
+        //     })
+        // })
+
         setPhotos(imgComponents);
     }
 
@@ -78,7 +88,11 @@ const PhotosScreen = ({ navigation, session, user }) => {
                 const fileName = Date.now() + uuidv4();
                 const { key } = Storage.put(`${session._id}/${fileName}`, blob, {
                     contentType: "image/jpeg",
+                    metadata: {
+                        owner: user.cognitoUserSub
+                    },
                     resumable: true,
+                    useAccelerateEndpoint: true,
                     completeCallback: async (event) => {
                         const uri = await blobToBase64(blob);
                         setPhotos((currentPhotos) => {
@@ -182,7 +196,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
 
         return (
             <TouchableOpacity style={{flex: 1, aspectRatio: 1, minWidth: "25%", maxWidth: "25%", ...gap}}>
-                <Image style={{height: "100%", width: "100%"}} source={{uri: uri}} /> 
+                <Image style={{height: "100%", width: "100%"}} source={uri} /> 
             </TouchableOpacity> 
         )
     }

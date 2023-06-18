@@ -1,7 +1,9 @@
 import { createStackNavigator } from "@react-navigation/stack";
-import { Button, Text } from 'react-native';
+import { Button } from 'react-native';
 import SessionsScreen from './SessionsScreen';
 import PhotosScreen from './PhotosScreen';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons'; 
 
 const SessionsNavigator = ({ navigation, sessions, user }) => {
     const Stack = createStackNavigator();
@@ -15,8 +17,13 @@ const SessionsNavigator = ({ navigation, sessions, user }) => {
                     key={session._id} 
                     options={{
                         headerTitle: session.name,
+                        headerBackImage: () => (
+                            <Ionicons name="chevron-back-outline" size={30} color="black" />
+                        ),
+                        headerShadowVisible: false,
+                        headerBackTitleVisible: false,
                         headerRight: () => (
-                            <Button title="Actions" />
+                            <MaterialCommunityIcons name="dots-vertical" size={30} color="black" />
                         )
                     }}
                     children={(props) => <PhotosScreen {...props} session={session} user={user} />} 

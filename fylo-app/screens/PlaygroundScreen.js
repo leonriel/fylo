@@ -1,21 +1,47 @@
-import { useState, useEffect } from 'react';
-import { SafeAreaView, View, Text, StyleSheet, FlatList, ScrollView } from 'react-native';
+import { useState, useEffect, useContext } from 'react';
+import { SafeAreaView, View, Text, StyleSheet, FlatList, ScrollView, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import SessionListItem from '../components/SessionListItem';
 import { getPendingIncomingSessionInvites } from '../utils/Sessions';
+import Button from '../components/Button';
+import { Entypo } from '@expo/vector-icons';
+import { ignoreSessionInvite, acceptSessionInvite } from '../utils/Sessions';
+import { AuthContext } from '../contexts/AuthContext';
+import { SessionsContext } from '../contexts/SessionsContext';
 
-const PlaygroundScreen = ({user, sessions}) => {
+const PlaygroundScreen = ({navigation, user, sessions}) => {
+    const { refreshUser } = useContext(AuthContext);
+    const { reloadSessions } = useContext(SessionsContext);
+    
     const [sessionInvites, setSessionInvites] = useState([]);
 
     useEffect(() => {
-        const getInvites = async () => {
-            const invites = await getPendingIncomingSessionInvites(user._id);
-
-            setSessionInvites(invites);
-        };
-
         getInvites();
     }, []);
+
+    const getInvites = async () => {
+        const invites = await getPendingIncomingSessionInvites(user._id);
+
+        setSessionInvites(invites);
+    };
+
+    const acceptInvite = async (senderId, recipientId, session) => {
+        try {
+            await acceptSessionInvite(senderId, recipientId, session);
+            await getInvites();
+            await refreshUser(user.username);
+            sessions.push(session);
+            await reloadSessions(sessions);
+            navigation.jumpTo("Sessions Navigator");
+        } catch (error) {
+            Alert.alert(error.response.data);
+        }
+    }
+
+    const ignoreInvite = async (senderId, recipientId, session) => {
+        await ignoreSessionInvite(senderId, recipientId, session);
+        await getInvites();
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -36,7 +62,25 @@ const PlaygroundScreen = ({user, sessions}) => {
                 <ScrollView horizontal={true} scrollEnabled={false} contentContainerStyle={{width: "100%"}}>
                     <FlatList 
                         data={sessionInvites}
-                        renderItem={({item: { session }}) => <SessionListItem sessionName={session.name} numContributors={session.contributors.length} /> }
+                        renderItem={({item: { session }}) => <SessionListItem 
+                            sessionName={session.name} 
+                            numContributors={session.contributors.length} 
+                            button1={<Button 
+                                borderRadius="25%"
+                                backgroundColor="#E8763A"
+                                height={25}
+                                marginRight={10}
+                                aspectRatio="8/3"
+                                fontFamily="Quicksand-SemiBold"
+                                fontColor="white"
+                                fontSize={12}
+                                text="ACCEPT"
+                                handler={() => acceptInvite(session.sender, user._id, session._id)}
+                            />}
+                            button2={<Pressable onPress={() => ignoreInvite(session.sender, user._id, session._id)}>
+                                <Entypo name="cross" size={16} color="gray" />
+                            </Pressable>}
+                        />}
                         keyExtrator={item => item.session._id}
                     />
                 </ScrollView>

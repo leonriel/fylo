@@ -1,4 +1,4 @@
-import { Button, View, SafeAreaView, StyleSheet } from 'react-native';
+import { Pressable, View, SafeAreaView, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import SessionListItem from  '../../components/SessionListItem';
 import { AntDesign } from '@expo/vector-icons'; 
@@ -14,8 +14,9 @@ const SessionsScreen = ({ navigation, sessions, user }) => {
                     return <SessionListItem 
                         sessionName={session.name} 
                         numContributors={session.contributors.length}
-                        button={<AntDesign name="select1" size={24} color="black" />}
-                        handler={() => navigation.navigate(session._id)} 
+                        button1={<Pressable onPress={() => navigation.navigate(session._id)}>
+                            <AntDesign name="select1" size={24} color="black" style={{marginLeft: "auto"}} />
+                        </Pressable>}
                         key={session._id} 
                     />
                 })}

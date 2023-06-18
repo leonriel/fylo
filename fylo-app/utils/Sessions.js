@@ -45,8 +45,18 @@ export const sendSessionInvite = async (senderId, recipientId, session) => {
 }
 
 export const acceptSessionInvite = async (senderId, recipientId, session) => {
+    const resp = await axios.post("https://fylo-app-server.herokuapp.com/sessionInvite/accept", {
+        sender: senderId,
+        recipient: recipientId,
+        session: session
+    });
+
+    return resp.data;
+}
+
+export const ignoreSessionInvite = async (senderId, recipientId, session) => {
     try {
-        const resp = await axios.post("https://fylo-app-server.herokuapp.com/sessionInvite/accept", {
+        const resp = await axios.post("https://fylo-app-server.herokuapp.com/sessionInvite/setStatusIgnored", {
             sender: senderId,
             recipient: recipientId,
             session: session

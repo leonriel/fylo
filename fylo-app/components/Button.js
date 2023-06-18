@@ -12,7 +12,7 @@ import { Pressable, View, Text, StyleSheet } from 'react-native';
 // text: String
 // handler: Callback
 
-const Button = ({borderRadius, backgroundColor, margin, height, aspectRatio, fontFamily, fontColor, fontSize, text, handler}) => {
+const Button = ({borderRadius, backgroundColor, margin, marginRight, height, aspectRatio, fontFamily, fontColor, fontSize, text, handler}) => {
     return (
         <Pressable onPress={handler}>
             <View style={{
@@ -21,7 +21,8 @@ const Button = ({borderRadius, backgroundColor, margin, height, aspectRatio, fon
                 height: height,
                 aspectRatio: aspectRatio,
                 borderRadius: borderRadius,
-                margin: margin
+                margin: margin,
+                marginRight: marginRight
             }}>
                 <Text style={{
                     fontFamily: fontFamily,

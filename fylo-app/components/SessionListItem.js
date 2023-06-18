@@ -4,9 +4,8 @@ import { Text, View, StyleSheet, Pressable } from 'react-native';
 // sessionName: String
 // numContributors: Number
 // button: Component
-// handler: Callback
 
-const SessionListItem = ({sessionName, numContributors, button, handler}) => {
+const SessionListItem = ({sessionName, numContributors, button1, button2}) => {
     return (
         <View style={styles.session}>
             <View style={styles.nameContainer}>
@@ -19,9 +18,10 @@ const SessionListItem = ({sessionName, numContributors, button, handler}) => {
                     </Text>
                 </View>
             </View>
-            <Pressable onPress={handler}>
-                {button}
-            </Pressable>
+            <View style={styles.buttonContainer}>
+                {button1} 
+                {button2}               
+            </View>
         </View>
     )
 }
@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         width: "100%",
         justifyContent: "space-between",
+        alignItems: "center",
         marginTop: 8,
         width: "100%",
         marginBottom: 8
@@ -47,6 +48,10 @@ const styles = StyleSheet.create({
         fontFamily: "Quicksand-Regular",
         fontSize: 12,
         color: "gray"
+    },
+    buttonContainer: {
+        flexDirection: "row",
+        alignItems: "center"
     }
 });
 
