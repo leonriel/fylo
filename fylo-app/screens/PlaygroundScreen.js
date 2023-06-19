@@ -5,6 +5,7 @@ import {
   Image,
   TextInput,
   ImageBackground,
+  View,
 } from "react-native";
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -40,10 +41,9 @@ const PlaygroundScreen = ({ user, sessions }) => {
     <>
       <StatusBar style="light" />
       <SafeAreaView style={styles.container}>
-        <SafeAreaView style={styles.headerContainer}>
+        <View style={styles.headerContainer}>
           <Pressable style={({ pressed }) => pressed && styles.pressedItem}>
-            <Entypo name="home" size={40} color="white" />
-            {/* <Text style={styles.headerText}>Home</Text> */}
+            <Entypo name="home" size={35} color="white" />
           </Pressable>
           <Image
             resizeMode="contain"
@@ -51,45 +51,42 @@ const PlaygroundScreen = ({ user, sessions }) => {
             source={require("../assets/icon.png")}
           />
           <Pressable style={({ pressed }) => pressed && styles.pressedItem}>
-            <Ionicons name="camera-outline" size={40} color="white" />
-            {/* <Text style={styles.headerText}>Camera</Text> */}
+            <Ionicons name="camera-outline" size={35} color="white" />
           </Pressable>
-        </SafeAreaView>
-        <SafeAreaView style={styles.subHeaderContainer}>
+        </View>
+        <View style={styles.subHeaderContainer}>
           <Text style={styles.headerText}>Albums</Text>
           <Pressable style={({ pressed }) => pressed && styles.pressedItem}>
             <MaterialIcons name="sort" size={40} color="white" />
-            {/* <Text style={styles.headerText}>Sort</Text> */}
           </Pressable>
-        </SafeAreaView>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search"
-          onChangeText={searchInputHandler}
-        />
-        <FontAwesome
-          name="search"
-          style={styles.searchIcon}
-          size={33}
-          color="#58b7b5"
-        />
-        <SafeAreaView>
+        </View>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search"
+            onChangeText={searchInputHandler}
+          />
+          <FontAwesome
+            name="search"
+            style={styles.searchIcon}
+            size={26}
+            color="#58b7b5"
+          />
+        </View>
+        <View>
           <ScrollView
             contentContainerStyle={styles.sessionsContainer}
             alwaysBounceVertical={true}
           >
             {playgroundSessions
               .sort((a, b) => {
-                return (
-                  b.isActive - a.isActive ||
-                  b.getTime() - a.getTime()
-                );
+                return b.isActive - a.isActive || b.getTime() - a.getTime();
               })
               .filter(
                 (session) => session.name.toLowerCase().indexOf(searchText) > -1
               )
               .map((session) => (
-                <SafeAreaView key={session._id} style={styles.sessionCard}>
+                <View key={session._id} style={styles.sessionCard}>
                   <Pressable
                     style={({ pressed }) => pressed && styles.pressedItem}
                   >
@@ -98,23 +95,19 @@ const PlaygroundScreen = ({ user, sessions }) => {
                       style={styles.sessionCard}
                       source={require("../assets/icon.png")}
                     >
-                      <SafeAreaView
+                      <View
                         style={[
                           styles.sessionActivityContainer,
                           !session.isActive && styles.invisible,
                         ]}
                       >
-                        {/* <Image
-                        style={styles.sessionActiveIcon}
-                        source={require("../assets/favicon.png")}
-                      /> */}
                         <Feather
                           name="radio"
                           style={styles.sessionActiveIcon}
                           size={25}
                           color="white"
                         />
-                        <Text style={[styles.sessionActivityText, { flex: 5 }]}>
+                        <Text style={styles.sessionActivityText}>
                           Currently Active
                         </Text>
                         <Pressable
@@ -134,13 +127,12 @@ const PlaygroundScreen = ({ user, sessions }) => {
                             color="white"
                           />
                         </Pressable>
-                        {/* <Text style={styles.sessionActivityText}>Exit</Text> */}
-                      </SafeAreaView>
-                      <SafeAreaView style={styles.sessionInfoContainer}>
+                      </View>
+                      <View style={styles.sessionInfoContainer}>
                         <Text style={styles.sessionNameText}>
                           {session.name}
                         </Text>
-                        <SafeAreaView style={styles.numContributorsContainer}>
+                        <View style={styles.numContributorsContainer}>
                           <Text style={styles.numContributorsText}>
                             {session.contributors.length}
                           </Text>
@@ -150,17 +142,17 @@ const PlaygroundScreen = ({ user, sessions }) => {
                             size={14}
                             color="white"
                           />
-                        </SafeAreaView>
+                        </View>
                         <Text style={styles.sessionInfoText}>
                           {formatDate(convertDate(session.updatedAt))} | #
                         </Text>
-                      </SafeAreaView>
+                      </View>
                     </ImageBackground>
                   </Pressable>
-                </SafeAreaView>
+                </View>
               ))}
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </SafeAreaView>
     </>
   );
@@ -176,24 +168,27 @@ const styles = StyleSheet.create({
   invisible: {
     opacity: 0,
   },
+  pressedItem: {
+    opacity: 0.5,
+  },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     marginTop: "15%",
-    marginHorizontal: "3%",
+    marginHorizontal: "3.5%",
   },
   subHeaderContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginHorizontal: "3%",
-  },
-  pressedItem: {
-    opacity: 0.5,
+    alignItems: "center",
+    marginHorizontal: "3.5%",
+    marginBottom: "1%",
   },
   headerText: {
     fontFamily: "Quicksand-Bold",
     fontWeight: "bold",
-    fontSize: 24,
+    fontSize: 23,
     color: "white",
   },
   logo: {
@@ -202,16 +197,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 4,
   },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: "5%",
+  },
   searchIcon: {
-    position: "absolute",
-    top: "20.1%",
-    left: "7%",
+    marginLeft: "-91.5%",
   },
   searchBar: {
-    margin: 10,
-    marginBottom: 4,
     backgroundColor: "white",
-    height: "6%",
+    height: "100%",
+    width: "95%",
+    marginLeft: "2.5%",
     borderRadius: 30,
     textAlign: "center",
   },
@@ -229,7 +227,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginVertical: "-2.5%",
     height: "1350%",
-    // justifyContent: "center",
   },
   sessionActivityContainer: {
     marginVertical: "-2.5%",
@@ -244,14 +241,13 @@ const styles = StyleSheet.create({
   sessionActivityText: {
     fontFamily: "Quicksand-Regular",
     fontWeight: "bold",
-    // fontSize: 16,
     color: "white",
+    flex: 5,
     margin: "2%",
   },
   sessionActiveIcon: {
     flex: 1,
     height: "100%",
-    // resizeMode: "contain",
     marginRight: "-8.5%",
     marginLeft: "4%",
     marginTop: "1%",
@@ -279,8 +275,6 @@ const styles = StyleSheet.create({
     marginBottom: "0%",
     marginTop: "1%",
     marginRight: "8%",
-    // flex: "auto",
-    // backgroundColor: "red",
   },
   sessionInfoText: {
     fontFamily: "Quicksand-Bold",
@@ -290,15 +284,12 @@ const styles = StyleSheet.create({
     margin: "2%",
     marginBottom: "0%",
     marginTop: "1%",
-    // backgroundColor: "red",
   },
   numContributorsContainer: {
     marginLeft: "-4%",
     marginTop: "-2%",
     flex: 1,
     flexDirection: "row",
-    // backgroundColor: "red",
-    // justifyContent: "flex-start",
   },
   numContributorsText: {
     fontFamily: "Quicksand-Bold",
@@ -306,13 +297,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "white",
     marginTop: 16.3,
-    // marginBottom: "2%",
-    // flex: 1,
   },
   numContributorsIcon: {
-    // flex: 1,
     height: "60%",
-    // resizeMode: "contain",
     marginLeft: "4%",
     marginTop: 17.3,
   },
