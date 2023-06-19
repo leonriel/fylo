@@ -202,17 +202,17 @@ export default function App() {
                     tabBar={({navigation}) => {
                       return (<SafeAreaView>
                         <View style={styles.header}>
-                          {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Playground")}>
+                          {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Playground")}>
                             <ProfileIcon firstName={user.firstName} lastName={user.lastName} />
-                          </Pressable>}
+                          </Pressable>} */}
                           <Image style={styles.logo} source={require('./assets/logo-black.png')} />
-                          {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
+                          {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
                             <Ionicons name="albums-outline" size={30} color="black" />                        
-                          </Pressable>}
+                          </Pressable>} */}
                         </View>
                     </SafeAreaView>)}}
                     screenOptions={{
-                        swipeEnabled: true,
+                        // swipeEnabled: false
                     }}
                     >
                     {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}

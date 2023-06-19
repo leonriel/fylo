@@ -52,51 +52,54 @@ const CameraComponent = () => {
     }
 
     return (
-        <View style = {styles.container}>
-            {!image ?
-            <Camera 
-                style={styles.camera}
-                type={type}
-                flashMode={flash}
-                ref={(r) => {camera = r}}
-            >
-                <View style={{flex: 1, alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', margin: 30}}>
-                    <Button icon='flash' size={30} color={flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
-                    onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
-                        Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off
-                    )}}
-                    />
-                    <Button onPress={toggleCameraType} icon='swap' color='#fff' size={30} /> 
-                </View>
-                <View style = {styles.buttonContainer}> 
-                    <Button onPress={takePicture} icon='circle' color ='#fff' size={80} />    
-                </View> 
-            </Camera> :
-            <View style={styles.camera}>
-                <ImageBackground source={{uri: image}} style={styles.camera}>
-                    <View style={styles.buttonContainer}>
-                        <Button onPress={() => {setImage(null)}} icon='retweet' color='#fff' size='30' text='Retake?'/>
+        <SafeAreaView style={{flex: 1}}>
+            <View style = {styles.container}>
+                {!image ?
+                <Camera 
+                    style={styles.camera}
+                    type={type}
+                    flashMode={flash}
+                    ref={(r) => {camera = r}}
+                >
+                    <View style={{flex: 1, alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', margin: 30}}>
+                        <Button icon='flash' size={30} color={flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
+                        onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
+                            Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off
+                        )}}
+                        />
+                        <Button onPress={toggleCameraType} icon='swap' color='#fff' size={30} /> 
                     </View>
-                </ImageBackground>
+                </Camera> :
+                <View style={styles.camera}>
+                    <ImageBackground source={{uri: image}} style={styles.camera}>
+                        <View style={styles.buttonContainer}>
+                            <Button onPress={() => {setImage(null)}} icon='retweet' color='#fff' size={30} text='Retake?'/>
+                        </View>
+                    </ImageBackground>
+                </View>
+                }
             </View>
-            }
-        </View>
+            <View style = {styles.buttonContainer}> 
+                <Button onPress={takePicture} icon='circle' color ='black' size={80} />    
+            </View> 
+        </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'black',
+        borderRadius: "20%",
+        aspectRatio: "3/4"
     },
 
     camera: {
-        flex: 1,
         width: '100%',
         justifyContent: 'flex-end',
-        borderRadius: "10%"
+        // borderRadius: "20%",
+        aspectRatio: "3/4"
     },
 
     button: {

@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
-import { SafeAreaView, FlatList, View, TouchableOpacity, Button, Alert, Modal, StyleSheet, Pressable } from 'react-native';
+import { SafeAreaView, FlatList, View, TouchableOpacity, Button, Alert, Modal, StyleSheet, Pressable, Text } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { endSession } from '../../utils/Sessions';
@@ -11,7 +11,7 @@ import UserListItem from '../../components/UserListItem';
 import { Storage } from 'aws-amplify';
 import { v4 as uuidv4 } from 'uuid';
 import { CLOUDFRONT_DOMAIN } from '@env';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 
 const PhotosScreen = ({ navigation, session, user }) => {
     const { refreshUser } = useContext(AuthContext);
@@ -23,52 +23,61 @@ const PhotosScreen = ({ navigation, session, user }) => {
 
     useEffect(() => {
         navigation.setOptions({
-            headerRight: () => (
-                <Pressable onPress={() => setActionsModalVisible(true)}>
-                    <MaterialCommunityIcons name="dots-vertical" size={30} color="black" />               
-                </Pressable>
-            )
+            header: ({navigation}) => {
+                return <View style={styles.header}>
+                    <Pressable onPress={() => navigation.goBack()}>
+                        <Ionicons name="chevron-back-outline" size={30} color="black" />
+                    </Pressable>
+                    <Text style={{fontFamily: "Quicksand-Bold", fontSize: 20}}>{session.name}</Text>
+                    <Pressable onPress={() => setActionsModalVisible(true)}>
+                        <MaterialCommunityIcons name="dots-vertical" size={30} color="black" />
+                    </Pressable>
+                </View>
+            },
+            headerStyle: {
+                height: 30
+            },
         })
         loadPhotos();
     }, []);
 
     const loadPhotos = async () => {
         const { results } = await Storage.list(`${session._id}/`, { pageSize : 'ALL' })
-        const calls = results.map(async (res) => {
-            try {
-                let photo = await Storage.get(res.key, { 
-                    download: true,
-                    progressCallback: (progress) => {
-                        console.log(progress.loaded / progress.total)
-                    }
-                });
-                photo = await blobToBase64(photo.Body);
-                return photo;
-            } catch (error) {
-                console.log(error);
-            }
-        })
+        // const calls = results.map(async (res) => {
+        //     try {
+        //         let photo = await Storage.get(res.key, { 
+        //             download: true,
+        //             progressCallback: (progress) => {
+        //                 console.log(progress.loaded / progress.total)
+        //             }
+        //         });
+        //         photo = await blobToBase64(photo.Body);
+        //         return photo;
+        //     } catch (error) {
+        //         console.log(error);
+        //     }
+        // })
 
-        let images;
-        try {
-            images = await Promise.all(calls)
-        } catch (error) {
-            console.log(error);
-        }
+        // let images;
+        // try {
+        //     images = await Promise.all(calls)
+        // } catch (error) {
+        //     console.log(error);
+        // }
 
-        const imgComponents = images.map((photo, index) => {
-            return ({
-                id: index,
-                uri: photo
-            })
-        })
-
-        // const imgComponents = results.map((res, index) => {
+        // const imgComponents = images.map((photo, index) => {
         //     return ({
         //         id: index,
-        //         uri: `${CLOUDFRONT_DOMAIN}/public/${res.key}`
+        //         uri: photo
         //     })
         // })
+
+        const imgComponents = results.map((res, index) => {
+            return ({
+                id: index,
+                uri: `${CLOUDFRONT_DOMAIN}/public/${res.key}`
+            })
+        })
 
         setPhotos(imgComponents);
     }
@@ -255,6 +264,14 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         margin: 8
+    },
+    header: {
+        width: "100%", 
+        flexDirection: "row", 
+        alignItems: "center", 
+        justifyContent: "space-between", 
+        alignSelf: "center",
+        marginVertical: 10
     },
     input: {
         width: '80%',

@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { Button, SafeAreaView, Modal, TextInput, Text, View, Dimensions, Pressable, StyleSheet } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+// import { Camera, CameraType } from 'expo-camera';
+import CameraComponent from '../components/CameraComponent';
 import { AuthContext } from '../contexts/AuthContext';
 import { SessionsContext } from '../contexts/SessionsContext';
 import { createSession } from '../utils/Sessions';
@@ -16,12 +17,7 @@ const HomeScreen = ({ navigation, sessions, user }) => {
     
     const [createSessionModalVisible, setCreateSessionModalVisible] = useState(false);
     const [sessionName, setSessionName] = useState(null);
-    const [cameraType, setCameraType] = useState(CameraType.back);
-    const [permission, requestPermission] = Camera.useCameraPermissions();
 
-    const handleSignOut = () => {
-        signOut();
-    }
 
     const handleSessionCreation = async () => {
         const newSession = await createSession(user._id, sessionName);
@@ -31,11 +27,6 @@ const HomeScreen = ({ navigation, sessions, user }) => {
         refreshUser(user.username);
         reloadSessions(user.sessions);
 
-    }
-
-    const handlePictureTake = async () => {
-        const photo = await Camera.takePictureAsync();
-        console.log(photo);
     }
 
     return (
@@ -51,9 +42,12 @@ const HomeScreen = ({ navigation, sessions, user }) => {
                             <Ionicons name="albums-outline" size={24} color="black" />                        
                         </Pressable>
                     </View> */}
-                    <View>
+                    <View style={{flex: 1}}>
                         {user.hasActiveSession ? (
-                            <Text style={styles.text}>You have an ongoing session!</Text>
+                            // <Text style={styles.text}>You have an ongoing session!</Text>
+                            <View style={{flex: 1, marginTop: 10}}>
+                                <CameraComponent />
+                            </View>
                         ) : (
                             <>
                                 <View style={styles.startSessionContainer}>
@@ -78,28 +72,7 @@ const HomeScreen = ({ navigation, sessions, user }) => {
                                 </Modal>
                             </>
                         )}
-                        <Button title="Sign Out" onPress={handleSignOut} />
                     </View>
-                    {/* <Camera style={{flex: 1, alignItems: "center", justifyContent: "flex-end", width: Dimensions.get('window').width, height: Dimensions.get('window').height}} type={cameraType}>
-                        <View style={{
-                            width: 75, 
-                            height: 75, 
-                            borderBottomRightRadius: "50%",
-                            borderBottomLeftRadius: "50%",
-                            borderTopLeftRadius: "50%",
-                            borderTopRightRadius: "50%",
-                            borderTopWidth: 6,
-                            borderRightWidth: 6,
-                            borderBottomWidth: 6,
-                            borderLeftWidth: 6,
-                            borderColor: "white",
-                            backgroundColor: "transparent",
-                            marginBottom: 64
-                        }}>
-                            <TouchableOpacity onPress={handlePictureTake}>
-                            </TouchableOpacity>
-                        </View>
-                    </Camera> */}
                 </SafeAreaView>
             {/* </LinearGradient> */}
         </View>

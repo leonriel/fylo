@@ -10,7 +10,7 @@ import { AuthContext } from '../contexts/AuthContext';
 import { SessionsContext } from '../contexts/SessionsContext';
 
 const PlaygroundScreen = ({navigation, user, sessions}) => {
-    const { refreshUser } = useContext(AuthContext);
+    const { signOut, refreshUser } = useContext(AuthContext);
     const { reloadSessions } = useContext(SessionsContext);
     
     const [sessionInvites, setSessionInvites] = useState([]);
@@ -43,6 +43,10 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
         await getInvites();
     }
 
+    const handleSignOut = () => {
+        signOut();
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             {/* <View style={styles.header}>
@@ -55,6 +59,16 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
                 <View style={styles.nameContainer}>
                     <Text style={styles.fullName}>{user.fullName}</Text>
                     <Text style={styles.username}>{user.username}</Text>
+                    <Button 
+                        borderRadius="25%" 
+                        backgroundColor="#E8763A" 
+                        height={25} aspectRatio="3/1" 
+                        fontFamily="Quicksand-SemiBold" 
+                        fontSize={12}
+                        marginTop={10}
+                        fontColor="white"
+                        text="SIGN OUT"
+                        handler={handleSignOut} />
                 </View>
             </View>
             <View style={styles.sessionInvitesContainer}>
@@ -127,7 +141,9 @@ const styles = StyleSheet.create({
         fontSize: 36
     },
     nameContainer: {
-        marginLeft: 50
+        marginLeft: 50,
+        alignItems: "flex-start",
+        justifyContent: "space-between"
     },
     fullName: {
         fontFamily: "Quicksand-Regular",
