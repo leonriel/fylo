@@ -28,6 +28,10 @@ const PlaygroundScreen = ({ user, sessions }) => {
     setSearchText(enteredText.toLowerCase());
   }
 
+  function clearSearch() {
+    setSearchText("");
+  }
+
   function convertDate(dbDate) {
     const date = new Date(dbDate);
     return date;
@@ -61,97 +65,119 @@ const PlaygroundScreen = ({ user, sessions }) => {
           </Pressable>
         </View>
         <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search"
-            onChangeText={searchInputHandler}
-          />
           <FontAwesome
             name="search"
             style={styles.searchIcon}
             size={26}
             color="#58b7b5"
           />
+          <TextInput
+            style={styles.searchBar}
+            placeholder=" Search"
+            onChangeText={searchInputHandler}
+            value={searchText}
+          />
+          {searchText.length !== 0 && (
+            <Pressable
+              style={({ pressed }) => pressed && styles.pressedItem}
+              onPress={clearSearch}
+            >
+              <Ionicons name="close" size={24} color="rgba(0, 0, 0, 0.2)" />
+            </Pressable>
+          )}
         </View>
         <View>
-          <ScrollView
-            contentContainerStyle={styles.sessionsContainer}
-            alwaysBounceVertical={true}
-          >
-            {playgroundSessions
-              .sort((a, b) => {
-                return b.isActive - a.isActive || b.getTime() - a.getTime();
-              })
-              .filter(
-                (session) => session.name.toLowerCase().indexOf(searchText) > -1
-              )
-              .map((session) => (
-                <View key={session._id} style={styles.sessionCard}>
-                  <Pressable
-                    style={({ pressed }) => pressed && styles.pressedItem}
-                  >
-                    <ImageBackground
-                      imageStyle={styles.sessionImage}
-                      style={styles.sessionCard}
-                      source={require("../assets/icon.png")}
+          {playgroundSessions.length === 0 ? (
+            <View style={styles.sessionsContainer}>
+              <Text style={styles.noSessionsText}>
+                Create a session to get started!
+              </Text>
+            </View>
+          ) : (
+            <ScrollView
+              contentContainerStyle={styles.sessionsContainer}
+              alwaysBounceVertical={true}
+            >
+              {playgroundSessions
+                .sort((a, b) => {
+                  return (
+                    b.isActive - a.isActive ||
+                    convertDate(b.updatedAt).getTime() -
+                      convertDate(a.updatedAt).getTime()
+                  );
+                })
+                .filter(
+                  (session) =>
+                    session.name.toLowerCase().indexOf(searchText) > -1
+                )
+                .map((session) => (
+                  <View key={session._id} style={styles.sessionCard}>
+                    <Pressable
+                      style={({ pressed }) => pressed && styles.pressedItem}
                     >
-                      <View
-                        style={[
-                          styles.sessionActivityContainer,
-                          !session.isActive && styles.invisible,
-                        ]}
+                      <ImageBackground
+                        imageStyle={styles.sessionImage}
+                        style={styles.sessionCard}
+                        source={require("../assets/icon.png")}
                       >
-                        <Feather
-                          name="radio"
-                          style={styles.sessionActiveIcon}
-                          size={25}
-                          color="white"
-                        />
-                        <Text style={styles.sessionActivityText}>
-                          Currently Active
-                        </Text>
-                        <Pressable
-                          style={({ pressed }) =>
-                            pressed
-                              ? [
-                                  styles.pressedItem,
-                                  styles.exitActiveSessionIcon,
-                                ]
-                              : styles.exitActiveSessionIcon
-                          }
+                        <View
+                          style={[
+                            styles.sessionActivityContainer,
+                            !session.isActive && styles.invisible,
+                          ]}
                         >
-                          <Ionicons
-                            name="exit-outline"
-                            style={styles.exitActiveSessionIcon}
-                            size={23}
+                          <Feather
+                            name="radio"
+                            style={styles.sessionActiveIcon}
+                            size={25}
                             color="white"
                           />
-                        </Pressable>
-                      </View>
-                      <View style={styles.sessionInfoContainer}>
-                        <Text style={styles.sessionNameText}>
-                          {session.name}
-                        </Text>
-                        <View style={styles.numContributorsContainer}>
-                          <Text style={styles.numContributorsText}>
-                            {session.contributors.length}
+                          <Text style={styles.sessionActivityText}>
+                            Currently Active
                           </Text>
-                          <FontAwesome5
-                            name="user-friends"
-                            style={styles.numContributorsIcon}
-                            size={14}
-                            color="white"
-                          />
+                          <Pressable
+                            style={({ pressed }) =>
+                              pressed
+                                ? [
+                                    styles.pressedItem,
+                                    styles.exitActiveSessionIcon,
+                                  ]
+                                : styles.exitActiveSessionIcon
+                            }
+                          >
+                            <Ionicons
+                              name="exit-outline"
+                              style={styles.exitActiveSessionIcon}
+                              size={23}
+                              color="white"
+                            />
+                          </Pressable>
                         </View>
-                        <Text style={styles.sessionInfoText}>
-                          {formatDate(convertDate(session.updatedAt))} | #
-                        </Text>
-                      </View>
-                    </ImageBackground>
-                  </Pressable>
-                </View>
-              ))}
-          </ScrollView>
+                        <View style={styles.sessionInfoContainer}>
+                          <Text style={styles.sessionNameText}>
+                            {session.name}
+                          </Text>
+                          <View style={styles.numContributorsContainer}>
+                            <Text style={styles.numContributorsText}>
+                              {session.contributors.length}
+                            </Text>
+                            <FontAwesome5
+                              name="user-friends"
+                              style={styles.numContributorsIcon}
+                              size={14}
+                              color="white"
+                            />
+                          </View>
+                          <Text style={styles.sessionInfoText}>
+                            {formatDate(convertDate(session.updatedAt))} | #
+                          </Text>
+                        </View>
+                      </ImageBackground>
+                    </Pressable>
+                  </View>
+                ))}
+            </ScrollView>
+          )}
         </View>
       </SafeAreaView>
     </>
@@ -175,8 +201,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: "15%",
+    marginTop: "13%",
     marginHorizontal: "3.5%",
+    height: "5%",
   },
   subHeaderContainer: {
     flexDirection: "row",
@@ -184,6 +211,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: "3.5%",
     marginBottom: "1%",
+    height: "5%",
   },
   headerText: {
     fontFamily: "Quicksand-Bold",
@@ -201,24 +229,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     height: "5%",
-  },
-  searchIcon: {
-    marginLeft: "-91.5%",
-  },
-  searchBar: {
     backgroundColor: "white",
-    height: "100%",
     width: "95%",
     marginLeft: "2.5%",
-    borderRadius: 30,
-    textAlign: "center",
+    borderRadius: "20%",
+  },
+  searchIcon: {
+    marginLeft: "2%",
+  },
+  searchBar: {
+    height: "80%",
+    width: "80%",
+    marginLeft: "1.5%",
+    textAlign: "left",
+  },
+  noSessionsText: {
+    fontFamily: "Quicksand-Regular",
+    fontSize: 20,
+    color: "white",
+    marginTop: "5%",
   },
   sessionsContainer: {
     margin: 16,
     height: "80%",
+    alignItems: "center",
   },
+
   sessionCard: {
     height: "20%",
+    width: "100%",
     marginVertical: "2.5%",
     borderRadius: 15,
   },
