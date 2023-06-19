@@ -9,7 +9,7 @@ const SessionsNavigator = ({ navigation, sessions, user }) => {
     const Stack = createStackNavigator();
 
     return (
-        <Stack.Navigator>
+        <Stack.Navigator initialRouteName="Sessions">
             <Stack.Screen name="Sessions" children={(props) => <SessionsScreen {...props} sessions={sessions} user={user} />} options={{headerShown: false}}/>
             {sessions.map(session => {
                 return <Stack.Screen 

@@ -30,8 +30,8 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
             await acceptSessionInvite(senderId, recipientId, session);
             await getInvites();
             await refreshUser(user.username);
-            sessions.push(session);
-            await reloadSessions(sessions);
+            user.sessions.push(session);
+            await reloadSessions(user.sessions);
             navigation.jumpTo("Sessions Navigator");
         } catch (error) {
             Alert.alert(error.response.data);
@@ -50,7 +50,7 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
             </View> */}
             <View style={styles.infoContainer}>
                 <View style={styles.initialsContainer}>
-                    <Text style={styles.initials}>GO</Text>
+                    <Text style={styles.initials}>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</Text>
                 </View>
                 <View style={styles.nameContainer}>
                     <Text style={styles.fullName}>{user.fullName}</Text>
