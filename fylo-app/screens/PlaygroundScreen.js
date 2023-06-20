@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { Camera, CameraType, Video} from 'expo-camera';
 import { useState, useEffect, useRef } from 'react';
-import { Button, StyleSheet, Text, Pressable, View, ImageBackground } from 'react-native';
+import { Button, StyleSheet, Text, Pressable, View, SafeAreaView, ImageBackground } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
 
 let camera = Camera
