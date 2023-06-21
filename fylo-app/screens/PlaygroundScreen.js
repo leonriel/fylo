@@ -39,8 +39,20 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
     }
 
     const ignoreInvite = async (senderId, recipientId, session) => {
-        await ignoreSessionInvite(senderId, recipientId, session);
-        await getInvites();
+        Alert.alert("Are you sure?", "You will you have to be reinvited if you want to join this session.", [
+            {
+                text: "Cancel",
+                style: "cancel"
+            },
+            {
+                text: "Ignore",
+                onPress: async () => {
+                    await ignoreSessionInvite(senderId, recipientId, session);
+                    await getInvites();
+                }
+            }
+        ])
+
     }
 
     const handleSignOut = () => {

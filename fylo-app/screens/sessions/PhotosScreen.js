@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext } from 'react';
-import { SafeAreaView, FlatList, View, TouchableOpacity, Button, Alert, Modal, StyleSheet, Pressable, Text } from 'react-native';
+import { SafeAreaView, FlatList, View, TouchableOpacity, Button, Alert, Modal, StyleSheet, Pressable, Text} from 'react-native';
+import * as Sharing from 'expo-sharing';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { endSession } from '../../utils/Sessions';
@@ -72,12 +73,17 @@ const PhotosScreen = ({ navigation, session, user }) => {
         //     })
         // })
 
-        const imgComponents = results.map((res, index) => {
+        const imgComponents = await Promise.all(results.map(async (res, index) => {
+            const uri = `${CLOUDFRONT_DOMAIN}/public/${res.key}`
+            const resp = await fetch(uri);
+            const blob = await resp.blob();
+            const base64 = await blobToBase64(blob);
             return ({
                 id: index,
-                uri: `${CLOUDFRONT_DOMAIN}/public/${res.key}`
+                uri: uri,
+                base64: base64
             })
-        })
+        }))
 
         setPhotos(imgComponents);
     }
@@ -197,16 +203,36 @@ const PhotosScreen = ({ navigation, session, user }) => {
         });
     };
 
-    const Photo = ({ uri, id }) => {
+    const onShare = async (base64) => {
+        try {
+            const result = await Sharing.shareAsync({
+              url: `data:image/jpeg;base64,` + base64,
+            });
+            console.log(result);
+            // if (result.action === Share.sharedAction) {
+            //   if (result.activityType) {
+            //     // shared with activity type of result.activityType
+            //   } else {
+            //     // shared
+            //   }
+            // } else if (result.action === Share.dismissedAction) {
+            //   // dismissed
+            // }
+          } catch (error) {
+            Alert.alert(error.message);
+          }
+    }
+
+    const Photo = ({ uri, id, base64 }) => {
         let gap;
         if (id % 4 != 3) {
             gap = {paddingRight: 1}
         }
 
         return (
-            <TouchableOpacity style={{flex: 1, aspectRatio: 1, minWidth: "25%", maxWidth: "25%", ...gap}}>
+            <Pressable onLongPress={onShare(base64)} style={{flex: 1, aspectRatio: 1, minWidth: "25%", maxWidth: "25%", ...gap}}>
                 <Image style={{height: "100%", width: "100%"}} source={uri} /> 
-            </TouchableOpacity> 
+            </Pressable> 
         )
     }
 
@@ -216,7 +242,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                     <FlatList 
                         data={photos}
                         renderItem={({item}) => {
-                            return <Photo uri={item.uri} id={item.id} />
+                            return <Photo uri={item.uri} id={item.id} base64={item.base64} />
                         }}
                         keyExtractor={(item) => item.id}
                         numColumns={4}
