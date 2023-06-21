@@ -117,42 +117,44 @@ const PlaygroundScreen = ({ user, sessions }) => {
                     >
                       <ImageBackground
                         imageStyle={styles.sessionImage}
-                        style={styles.sessionCard}
+                        style={[
+                          styles.sessionImageCard,
+                          session.isActive && {
+                            justifyContent: "space-between",
+                          },
+                        ]}
                         source={require("../assets/icon.png")}
                       >
-                        <View
-                          style={[
-                            styles.sessionActivityContainer,
-                            !session.isActive && styles.invisible,
-                          ]}
-                        >
-                          <Feather
-                            name="radio"
-                            style={styles.sessionActiveIcon}
-                            size={25}
-                            color="white"
-                          />
-                          <Text style={styles.sessionActivityText}>
-                            Currently Active
-                          </Text>
-                          <Pressable
-                            style={({ pressed }) =>
-                              pressed
-                                ? [
-                                    styles.pressedItem,
-                                    styles.exitActiveSessionIcon,
-                                  ]
-                                : styles.exitActiveSessionIcon
-                            }
-                          >
-                            <Ionicons
-                              name="exit-outline"
-                              style={styles.exitActiveSessionIcon}
-                              size={23}
+                        {session.isActive && (
+                          <View style={styles.sessionActivityContainer}>
+                            <Feather
+                              name="radio"
+                              style={styles.sessionActiveIcon}
+                              size={25}
                               color="white"
                             />
-                          </Pressable>
-                        </View>
+                            <Text style={styles.sessionActivityText}>
+                              Currently Active
+                            </Text>
+                            <Pressable
+                              style={({ pressed }) =>
+                                pressed
+                                  ? [
+                                      styles.pressedItem,
+                                      styles.exitActiveSessionIcon,
+                                    ]
+                                  : styles.exitActiveSessionIcon
+                              }
+                            >
+                              <Ionicons
+                                name="exit-outline"
+                                style={styles.exitActiveSessionIcon}
+                                size={23}
+                                color="white"
+                              />
+                            </Pressable>
+                          </View>
+                        )}
                         <View style={styles.sessionInfoContainer}>
                           <Text style={styles.sessionNameText}>
                             {session.name}
@@ -191,9 +193,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#58b7b5",
   },
-  invisible: {
-    opacity: 0,
-  },
   pressedItem: {
     opacity: 0.5,
   },
@@ -222,8 +221,7 @@ const styles = StyleSheet.create({
   logo: {
     width: "50%",
     height: "70%",
-    marginHorizontal: 16,
-    marginTop: 4,
+    marginTop: "1%",
   },
   searchContainer: {
     flexDirection: "row",
@@ -250,7 +248,7 @@ const styles = StyleSheet.create({
     marginTop: "5%",
   },
   sessionsContainer: {
-    margin: 16,
+    margin: "3.5%",
     height: "80%",
     alignItems: "center",
   },
@@ -259,87 +257,79 @@ const styles = StyleSheet.create({
     height: "20%",
     width: "100%",
     marginVertical: "2.5%",
-    borderRadius: 15,
+    borderRadius: "12.5%",
+  },
+  sessionImageCard: {
+    height: "100%",
+    borderRadius: "12.5%",
+    justifyContent: "flex-end",
   },
   sessionImage: {
     resizeMode: "cover",
-    borderRadius: 15,
-    marginVertical: "-2.5%",
-    height: "1350%",
+    borderRadius: 12.5,
   },
   sessionActivityContainer: {
-    marginVertical: "-2.5%",
     backgroundColor: "rgba(121, 160, 212, 0.5)",
+    height: "30%",
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     color: "white",
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    height: "405%",
+    borderTopLeftRadius: "12.5%",
+    borderTopRightRadius: "12.5%",
   },
   sessionActivityText: {
     fontFamily: "Quicksand-Regular",
     fontWeight: "bold",
     color: "white",
-    flex: 5,
-    margin: "2%",
+    flex: 1,
+    marginLeft: "2%",
   },
   sessionActiveIcon: {
-    flex: 1,
-    height: "100%",
-    marginRight: "-8.5%",
     marginLeft: "4%",
-    marginTop: "1%",
   },
   exitActiveSessionIcon: {
-    marginTop: "1%",
     marginRight: "1.5%",
   },
   sessionInfoContainer: {
-    marginVertical: "14.2%",
     backgroundColor: "rgba(121, 160, 212, 0.5)",
+    height: "30%",
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     color: "white",
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    height: "405%",
+    borderBottomLeftRadius: "12.5%",
+    borderBottomRightRadius: "12.5%",
   },
   sessionNameText: {
     fontFamily: "Quicksand-Bold",
     fontWeight: "bold",
     fontSize: 20,
     color: "white",
-    margin: "2%",
-    marginBottom: "0%",
-    marginTop: "1%",
-    marginRight: "8%",
+    marginLeft: "4%",
   },
   sessionInfoText: {
     fontFamily: "Quicksand-Bold",
     fontWeight: "bold",
     fontSize: 20,
     color: "white",
-    margin: "2%",
-    marginBottom: "0%",
-    marginTop: "1%",
+    marginRight: "3.5%",
   },
   numContributorsContainer: {
-    marginLeft: "-4%",
-    marginTop: "-2%",
+    height: "100%",
     flex: 1,
     flexDirection: "row",
+    alignItems: "center",
+    marginLeft: "2.5%",
+    marginTop: "0.5%",
   },
   numContributorsText: {
     fontFamily: "Quicksand-Bold",
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: 16,
     color: "white",
-    marginTop: 16.3,
   },
   numContributorsIcon: {
-    height: "60%",
-    marginLeft: "4%",
-    marginTop: 17.3,
+    marginLeft: "1%",
   },
 });
