@@ -92,28 +92,28 @@ const PlaygroundScreen = ({user, sessions}) => {
     
     return (
         <View style = {styles.container}>
-            if(!image && !record){
+            {!image && !record && (
                 <Camera style={styles.camera} type={type} flashMode={flash} ref={(r) => {camera = r}}>
                     <View style={{flex: 1, alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', margin: 30}}>
-                        <Button icon='flash' size='30' color={flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
+                        <Button icon='flash' size={30} color={flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
                         onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
                             Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off)}}/>
-                        <Button onPress={toggleCameraType} icon='swap' color='#fff' size='30' margin={10}/>
+                        <Button onPress={toggleCameraType} icon='swap' color='#fff' size={30} margin={10}/>
                     </View>
                     <View style = {styles.buttonContainer}>
                         {/* <Button onPress={takePicture} icon='circle' color ='#fff' size='80' margin={10} /> */}
-                        <VideoButton onPress={takePicture} onLongPress={takeVideo} onPressOut={stopVideo} icon='circle' color ='#fff' size='80' margin={10} />
+                        <VideoButton onPress={takePicture} onLongPress={takeVideo} onPressOut={stopVideo} icon='circle' color ='#fff' size={80} margin={10} />
                     </View>
-                </Camera>
-            } else if (image) {
+                </Camera>)}
+            {image && (
                 <View style={styles.camera}>
                     <ImageBackground source={{uri: image}} style={styles.camera}>
                         <View style={styles.buttonContainer}>
-                            <Button onPress={() => {setImage(null)}} icon='retweet' color='#fff' size='30' text='Retake?'/>
+                            <Button onPress={() => {setImage(null)}} icon='retweet' color='#fff' size={30} text='Retake?'/>
                         </View>
                     </ImageBackground>
-                </View>
-            } else if (record) {
+                </View>)}
+            {record && (
                 <View style={styles.camera}>
                     {/* <Video 
                         ref={record} 
@@ -124,8 +124,7 @@ const PlaygroundScreen = ({user, sessions}) => {
                         isLooping
                         onPlaybackStatusUpdate={status => (setStatus(()=>status))}
                     />  */}
-                </View>
-            }
+                </View> )}
         </View>
     )
 }
