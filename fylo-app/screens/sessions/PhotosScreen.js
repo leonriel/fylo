@@ -1,9 +1,10 @@
 import { useEffect, useState, useContext } from 'react';
-import { SafeAreaView, FlatList, View, TouchableOpacity, Button, Alert, Modal, StyleSheet, Pressable, Text} from 'react-native';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
+import { SafeAreaView, FlatList, View, Button, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { endSession } from '../../utils/Sessions';
+import { endSession, uploadPhoto } from '../../utils/Sessions';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SessionsContext } from '../../contexts/SessionsContext';
 import { searchUsers } from '../../utils/Users';
@@ -13,6 +14,7 @@ import { Storage } from 'aws-amplify';
 import { v4 as uuidv4 } from 'uuid';
 import { CLOUDFRONT_DOMAIN } from '@env';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 
 const PhotosScreen = ({ navigation, session, user }) => {
     const { refreshUser } = useContext(AuthContext);
@@ -21,6 +23,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [actionsModalVisible, setActionsModalVisible] = useState(false);
     const [inviteModalVisible, setInviteModalVisible] = useState(false);
     const [searchedUsers, setSearchedUsers] = useState([]);
+    const [activityIndicator, setActivityIndicator] = useState(false);
 
     useEffect(() => {
         navigation.setOptions({
@@ -43,49 +46,19 @@ const PhotosScreen = ({ navigation, session, user }) => {
     }, []);
 
     const loadPhotos = async () => {
-        const { results } = await Storage.list(`${session._id}/`, { pageSize : 'ALL' })
-        // const calls = results.map(async (res) => {
-        //     try {
-        //         let photo = await Storage.get(res.key, { 
-        //             download: true,
-        //             progressCallback: (progress) => {
-        //                 console.log(progress.loaded / progress.total)
-        //             }
-        //         });
-        //         photo = await blobToBase64(photo.Body);
-        //         return photo;
-        //     } catch (error) {
-        //         console.log(error);
-        //     }
-        // })
-
-        // let images;
-        // try {
-        //     images = await Promise.all(calls)
-        // } catch (error) {
-        //     console.log(error);
-        // }
-
-        // const imgComponents = images.map((photo, index) => {
-        //     return ({
-        //         id: index,
-        //         uri: photo
-        //     })
-        // })
-
-        const imgComponents = await Promise.all(results.map(async (res, index) => {
-            const uri = `${CLOUDFRONT_DOMAIN}/public/${res.key}`
-            const resp = await fetch(uri);
-            const blob = await resp.blob();
-            const base64 = await blobToBase64(blob);
+        // console.log(session);
+        const numPhotos = session.photos.length;
+        const imgComponents = session.photos.map((photo, index) => {
             return ({
-                id: index,
-                uri: uri,
-                base64: base64
+                id: numPhotos - index,
+                uri: `${CLOUDFRONT_DOMAIN}/public/${photo.key}`
             })
-        }))
+        });
+
+        // console.log(imgComponents);
 
         setPhotos(imgComponents);
+
     }
 
     const handlePhotoUpload = async () => {
@@ -100,31 +73,22 @@ const PhotosScreen = ({ navigation, session, user }) => {
             try {
                 const resp = await fetch(result.assets[0].uri);
                 const blob = await resp.blob();
-                const fileName = Date.now() + uuidv4();
-                const { key } = Storage.put(`${session._id}/${fileName}`, blob, {
-                    contentType: "image/jpeg",
-                    metadata: {
-                        owner: user.cognitoUserSub
+                setActionsModalVisible(false);
+                setActivityIndicator(true);
+                await uploadPhoto(session, blob, user).then(async (resp) => {
+                    const uri = await blobToBase64(blob);
+                    setPhotos((currentPhotos) => [{
+                        id: currentPhotos.length,
+                        uri: uri
                     },
-                    resumable: true,
-                    useAccelerateEndpoint: true,
-                    completeCallback: async (event) => {
-                        const uri = await blobToBase64(blob);
-                        setPhotos((currentPhotos) => {
-                            return ([
-                                ...currentPhotos,
-                                {
-                                    id: currentPhotos.length,
-                                    uri: uri
-                                }
-                            ])
-                        })
-                        Alert.alert("Photo uploaded!");
-                    }
+                    ...currentPhotos])
+                    reloadSessions(user.sessions);
+                    Alert.alert("Image uploaded!");
                 });
-
             } catch (error) {
                 console.error(error);
+            } finally {
+                setActivityIndicator(false);
             }
         }
     }
@@ -174,7 +138,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
     }
 
     const handleEndSession = async () => (
-        Alert.alert("Are you sure?", "This is a permanent action and connot be undone.", [
+        Alert.alert("Are you sure?", "This is a permanent action and cannot be undone.", [
             {
                 text: 'Cancel',
                 style: 'cancel'
@@ -203,34 +167,43 @@ const PhotosScreen = ({ navigation, session, user }) => {
         });
     };
 
-    const onShare = async (base64) => {
+    const handleShare = async (uri) => {
         try {
-            const result = await Sharing.shareAsync({
-              url: `data:image/jpeg;base64,` + base64,
-            });
-            console.log(result);
-            // if (result.action === Share.sharedAction) {
-            //   if (result.activityType) {
-            //     // shared with activity type of result.activityType
-            //   } else {
-            //     // shared
-            //   }
-            // } else if (result.action === Share.dismissedAction) {
-            //   // dismissed
-            // }
+            const downloadPath = `${FileSystem.cacheDirectory}/${uuidv4()}.jpeg`;
+            const { uri: localUrl } = await FileSystem.downloadAsync(
+                uri,
+                downloadPath
+              );
+            const available = await Sharing.isAvailableAsync()
+            if (available) {
+                await Sharing.shareAsync(localUrl);
+            }
           } catch (error) {
             Alert.alert(error.message);
           }
     }
 
-    const Photo = ({ uri, id, base64 }) => {
+    const Photo = ({ uri, id }) => {
         let gap;
-        if (id % 4 != 3) {
-            gap = {paddingRight: 1}
+        const numPhotos = photos.length;
+        if (numPhotos % 4 == 0 && id % 4 != 0) {
+            gap = {paddingLeft: 1}
+        }
+
+        if (numPhotos % 4 == 1 && id % 4 != 1) {
+            gap = {paddingLeft: 1}
+        }
+
+        if (numPhotos % 4 == 2 && id % 4 != 2) {
+            gap = {paddingLeft: 1}
+        }
+
+        if (numPhotos % 4 == 3 && id % 4 != 3) {
+            gap = {paddingLeft: 1}
         }
 
         return (
-            <Pressable onLongPress={onShare(base64)} style={{flex: 1, aspectRatio: 1, minWidth: "25%", maxWidth: "25%", ...gap}}>
+            <Pressable onLongPress={() => handleShare(uri)} style={{flex: 1, aspectRatio: 1, minWidth: "25%", maxWidth: "25%", ...gap}}>
                 <Image style={{height: "100%", width: "100%"}} source={uri} /> 
             </Pressable> 
         )
@@ -238,17 +211,18 @@ const PhotosScreen = ({ navigation, session, user }) => {
 
     return (
             <SafeAreaView style={{flex: 1}}>
+                {activityIndicator && <ActivityIndicator />} 
                 <View style={{width: "100%", flex: 4, justifyContent: "center", alignSelf: "center"}}>
                     <FlatList 
                         data={photos}
                         renderItem={({item}) => {
-                            return <Photo uri={item.uri} id={item.id} base64={item.base64} />
+                            return <Photo uri={item.uri} id={item.id} />
                         }}
                         keyExtractor={(item) => item.id}
                         numColumns={4}
                         ItemSeparatorComponent={() => <View style={{height: 1}} />}
-                        // key={4}
                         refreshing={true}
+                        scrollEnabled={true}
                     />
                 </View>
                 <Modal

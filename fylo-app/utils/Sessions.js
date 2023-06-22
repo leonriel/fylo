@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { Storage } from 'aws-amplify';
+import { v4 as uuidv4 } from 'uuid';
 
 // Use MongoDB transactions instead
 
@@ -87,6 +89,34 @@ export const getPendingOutgoingSessionInvites = async (sessionId) => {
         })
 
         return resp.data;
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
+export const uploadPhoto = async (session, imgBlob, owner) => {
+    try {
+        if (!session.contributors.includes(owner._id)) {
+            throw new Error("User does not have permission to add to this session.");
+        }
+
+        const fileName = Date.now() + uuidv4();
+
+        const { key } = await Storage.put(`${session._id}/${fileName}`, imgBlob, {
+            contentType: "image/jpeg",
+            useAccelerateEndpoint: true
+        });
+
+        try {
+            await axios.post("https://fylo-app-server.herokuapp.com/session/addPhoto", {
+                session: session._id,
+                key: key,
+                owner: owner._id
+            })
+        } catch (error) {
+            throw error.message;
+        }
+
     } catch (error) {
         console.log(error.message);
     }
