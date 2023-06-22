@@ -24,13 +24,15 @@ const PlaygroundScreen = ({ user, sessions }) => {
         loadPendingIncoming();
     }, [user]);
 
+    console.log(pendingIncoming);
+
     // Handle accept button press
     const handleAccept = async (pendingSessionInvite) => {
         try {
             const acceptInc = await axios.post("https://fylo-app-server.herokuapp.com/sessionInvite/accept", {
-                sender: pendingSessionInvite.sender,
-                recipient: pendingSessionInvite.recipient,
-                session: pendingSessionInvite.session
+                sender: pendingSessionInvite.session.sender,
+                recipient: pendingSessionInvite._id,
+                session: pendingSessionInvite.session._id
             });
 
             // Once the accept request is successful, remove the invite from the display
@@ -38,7 +40,8 @@ const PlaygroundScreen = ({ user, sessions }) => {
                 pendingIncoming.filter((invite) => invite !== pendingSessionInvite)
             );
         } catch (error) {
-            Alert.alert('You can only be in one session at a time!');
+            Alert.alert(error.response.data);
+            // Alert.alert('You can only be in one session at a time!');
         }
     };
 
