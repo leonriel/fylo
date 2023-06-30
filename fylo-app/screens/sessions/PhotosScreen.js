@@ -1,7 +1,8 @@
-import { useEffect, useState, useContext, useRef, memo } from 'react';
+import { useEffect, useState, useContext, useRef } from 'react';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
-import { SafeAreaView, FlatList, View, Button, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions } from 'react-native';
+import { FlatList, View, Button, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,16 +17,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { CLOUDFRONT_DOMAIN } from '@env';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import PhotoCarousel from '../../components/PhotoCarousel';
-import Square from './Square';
 
 // TODO: Camera
 // TODO: Integrate Create Session Modal 6/30
-// TODO: How to make react native modals less laggy/cluncky? 6/30
 // TODO: Redesign session "settings" 6/30
 // TODO: Allow users to edit profile page 6/30
-// TODO: How to preload images so they don't appear staggered 6/30
 // TODO: Find a way to make FlatList gap logic less hacky 6/30
-// TODO: Prevent FlatList from reloading all the time... React memo (pure component)? 6/30
 // TODO: App flow??
 // TODO: Navigation Tab Bar?
 // TODO: Friends?
@@ -39,9 +36,8 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [searchedUsers, setSearchedUsers] = useState([]);
     const [activityIndicator, setActivityIndicator] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
-    const [offset, setOffset] = useState(0);
 
-    const modalRef = useRef()
+    const offset = useRef(0);
 
     useEffect(() => {
         navigation.setOptions({
@@ -65,10 +61,9 @@ const PhotosScreen = ({ navigation, session, user }) => {
 
     const loadPhotos = async () => {
         const numPhotos = session.photos.length;
-        // await Promise.all(session.photos.map((photo) => {
-        //     const url = `${CLOUDFRONT_DOMAIN}/public/${photo.key}`
-        //     return Image.prefetch(url)
-        // }));
+        FastImage.preload(session.photos.map((photo) => {
+            return {uri: `${CLOUDFRONT_DOMAIN}/public/${photo.key}`}
+        }));
 
         const imgComponents = session.photos.map((photo, index) => {
             const url = `${CLOUDFRONT_DOMAIN}/public/${photo.key}`
@@ -180,30 +175,14 @@ const PhotosScreen = ({ navigation, session, user }) => {
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         return new Promise(resolve => {
-          reader.onloadend = () => {
-            resolve(reader.result);
-          };
+            reader.onloadend = () => {
+                resolve(reader.result);
+            };
         });
     };
 
-    const handleShare = async (uri) => {
-        try {
-            const downloadPath = `${FileSystem.cacheDirectory}/${uuidv4()}.jpeg`;
-            const { uri: localUrl } = await FileSystem.downloadAsync(
-                uri,
-                downloadPath
-              );
-            const available = await Sharing.isAvailableAsync()
-            if (available) {
-                await Sharing.shareAsync(localUrl);
-            }
-          } catch (error) {
-            Alert.alert(error.message);
-          }
-    }
-
     const handleOpenCarousel = async (index) => {
-        setOffset(index);
+        offset.current = index;
         setModalVisible(true);
     }
 
@@ -227,16 +206,14 @@ const PhotosScreen = ({ navigation, session, user }) => {
         }
 
         return (
-            <Pressable onPress={() => handleOpenCarousel(index)} onLongPress={() => handleShare(uri)} style={{flex: 1, aspectRatio: 1, minWidth: Dimensions.get('window').width / 4, maxWidth: Dimensions.get('window').width / 4, ...gap}}>
+            <Pressable onPress={() => handleOpenCarousel(index)} style={{flex: 1, aspectRatio: 1, minWidth: Dimensions.get('window').width / 4, maxWidth: Dimensions.get('window').width / 4, ...gap}}>
                 <FastImage style={{height: "100%", width: "100%"}} source={{uri: uri}} /> 
             </Pressable> 
         )
     }
 
-    const [modal, setModal] = useState(false);
-
     return (
-        <SafeAreaView style={{flex: 1}}>
+        <View style={{flex: 1}}>
             {activityIndicator && <ActivityIndicator />} 
             <View style={{width: "100%", flex: 4, justifyContent: "center", alignSelf: "center"}}>
                 <FlatList 
@@ -249,64 +226,42 @@ const PhotosScreen = ({ navigation, session, user }) => {
                     ItemSeparatorComponent={() => <View style={{height: 1}} />}
                     refreshing={true}
                     scrollEnabled={true}
-                    // horizontal
                 />
             </View>
-            <Button title="Open" onPress={() => setModal(true)} />
-            <Modal
-                visible={modal}
-                animationType="slide"
-            >
-                <SafeAreaView style={{flex: 1}}>
-                <FlatList 
-                    data={photos}
-                    renderItem={({item, index}) => {
-                        return <Square id={index + 1} />
-                    }}
-                    keyExtractor={(item) => item.id}
-                    numColumns={4}
-                    ItemSeparatorComponent={() => <View style={{height: 1}} />}
-                    refreshing={true}
-                    scrollEnabled={true}
-                    // horizontal={listHorizontal}
-                />
-                    {/* <Square id={1} />
-                    <Square id={2} /> */}
-                    <Button title="Close" onPress={() => setModal(false)} />
-                </SafeAreaView>
-            </Modal>
-            <PhotoCarousel visible={modalVisible} photos={photos} handler={() => setModalVisible(false)} offset={offset} />
+            <PhotoCarousel visible={modalVisible} photos={photos} handleClose={() => setModalVisible(false)} offset={offset} />
             <Modal
                 animationType="slide"
                 visible={actionsModalVisible}
                 onRequestClose={() => setActionsModalVisible(false)}
             >
-                <SafeAreaView style={styles.container}>
-                        {session.isActive ? (
-                        <>
-                            <Button title="Upload Photo" onPress={handlePhotoUpload} />
-                            <Button title="Take Picture" onPress={handlePictureTake} />
-                            <Button title="Invite" onPress={() => setInviteModalVisible(true)} />
-                            <Modal
-                                animationType="slide"
-                                visible={inviteModalVisible}
-                                onRequestClose={() => setInviteModalVisible(false)}
-                            >
-                                <SafeAreaView style={styles.container}>
-                                    <Input label="Search" width="80%" handler={(text) => handleSearchUsers(text)} />
-                                    {searchedUsers ? searchedUsers.map(searchedUser => (
-                                        <UserListItem key={searchedUser.username} firstName={searchedUser.firstName} lastName={searchedUser.lastName} fullName={searchedUser.fullName} username={searchedUser.username} />
-                                    )) : null}
-                                    <Button title="Close" onPress={() => setInviteModalVisible(false)} />
-                                </SafeAreaView>
-                            </Modal>
-                            <Button title="End Session" onPress={handleEndSession} />
-                        </>
-                    ) : null}
-                    <Button title="Close" onPress={() => setActionsModalVisible(false)} />
-                </SafeAreaView>
+                <SafeAreaProvider>
+                    <SafeAreaView style={styles.container}>
+                            {session.isActive ? (
+                            <>
+                                <Button title="Upload Photo" onPress={handlePhotoUpload} />
+                                <Button title="Take Picture" onPress={handlePictureTake} />
+                                <Button title="Invite" onPress={() => setInviteModalVisible(true)} />
+                                <Modal
+                                    animationType="slide"
+                                    visible={inviteModalVisible}
+                                    onRequestClose={() => setInviteModalVisible(false)}
+                                >
+                                    <SafeAreaView style={styles.container}>
+                                        <Input label="Search" width="80%" handler={(text) => handleSearchUsers(text)} />
+                                        {searchedUsers ? searchedUsers.map(searchedUser => (
+                                            <UserListItem key={searchedUser.username} firstName={searchedUser.firstName} lastName={searchedUser.lastName} fullName={searchedUser.fullName} username={searchedUser.username} />
+                                        )) : null}
+                                        <Button title="Close" onPress={() => setInviteModalVisible(false)} />
+                                    </SafeAreaView>
+                                </Modal>
+                                <Button title="End Session" onPress={handleEndSession} />
+                            </>
+                        ) : null}
+                        <Button title="Close" onPress={() => setActionsModalVisible(false)} />
+                    </SafeAreaView>
+                </SafeAreaProvider>
             </Modal>
-        </SafeAreaView>
+        </View>
     )
 }
 

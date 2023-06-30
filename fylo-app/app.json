@@ -4,7 +4,7 @@
     "slug": "fylo-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-black.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -27,11 +27,22 @@
         {
           "cameraPermission": "Allow Fylo to access your camera."
         }
+      ],
+      [
+        "expo-media-library",
+          {
+            "photosPermission": "Allow Fylo to access your photos.",
+            "savePhotosPermission": "Allow Fylo to save photos.",
+            "isAccessMediaLocationEnabled": true
+          }
       ]
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.fylo-app"
+      "bundleIdentifier": "com.anonymous.fylo-app",
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "This app saves photos to your library."
+      }
     },
     "android": {
       "adaptiveIcon": {

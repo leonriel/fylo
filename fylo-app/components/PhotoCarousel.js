@@ -1,42 +1,147 @@
-// import { useState } from 'react';
-import { Modal, SafeAreaView, FlatList, View, Dimensions, Button, ScrollView } from 'react-native';
-// import { Image } from 'expo-image';
+import { useEffect, useState } from 'react';
+import { Modal, FlatList, View, Dimensions, Button, Pressable, Alert } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons, Entypo, Feather } from '@expo/vector-icons';
+import { v4 as uuidv4 } from 'uuid';
+import * as MediaLibrary from 'expo-media-library';
 
 // TODO: Add share and download functionalities
 
-const PhotoCarousel = ({photos, visible, handler, offset}) => {
+// offset is a react ref from PhotosScreen.js
+
+const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
+    const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+
     const totalItemWidth = Dimensions.get('window').width + 20
+
+    // SHARESHEET ERRORS!!!!! >:(
+    const handleShare = async (uri) => {
+        try {
+            const downloadPath = `${FileSystem.cacheDirectory}${uuidv4()}.jpeg`;
+            const { uri: localUrl } = await FileSystem.downloadAsync(
+                uri,
+                downloadPath
+            );
+            const available = await Sharing.isAvailableAsync()
+            if (available) {
+                Sharing.shareAsync(localUrl, {
+                    UTI: "JPEG",
+                    mimeType: "image/jpeg"
+                });
+            }
+        } catch (error) {
+            Alert.alert(error.message);
+        }
+    }
+
+    const handleDownload = async (uri) => {
+        try {
+            if (!permissionResponse.granted) {
+                const result = await requestPermission();
+                if (!result) {
+                    Alert.alert("Unable to save media to your device.");
+                    throw new Error('Invalid permissions.');
+                }
+            }
+
+            const downloadPath = `${FileSystem.cacheDirectory}${uuidv4()}.jpeg`;
+            const { uri: localUrl } = await FileSystem.downloadAsync(
+                uri,
+                downloadPath
+            );
+
+            // console.log(localUrl);
+
+            MediaLibrary.saveToLibraryAsync(localUrl);
+        } catch (error) {
+            console.log(error.message);
+        }
+    }
+
+    const CarouselPhoto = ({uri}) => {
+        const [width, setWidth] = useState(null);
+        const [height, setHeight] = useState(null);
+
+        return (
+            <View style={{height: "100%", width: Dimensions.get('window').width, justifyContent: "center"}}>
+                <FastImage 
+                    resizeMode={FastImage.resizeMode.contain} 
+                    style={{width: "100%", aspectRatio: height && width ? `${width}/${height}` : 'auto'}} 
+                    source={{uri: uri}} 
+                    onLoad={(e) => {
+                        setWidth(e.nativeEvent.width);
+                        setHeight(e.nativeEvent.height);
+                    }}
+                />
+            </View>
+        )
+    }
 
     return (
         <Modal
             animationType="slide"
             visible={visible}
-            onRequestClose={handler}
+            onRequestClose={handleClose}
         >
-            <FlatList
-                data={photos}
-                renderItem={({item}) => {
-                    return (
-                        <FastImage resizeMode={FastImage.resizeMode.contain} style={{width: Dimensions.get('window').width, height: Dimensions.get('window').height}} source={{uri: item.uri}} />
-                    )
-                }}
-                ItemSeparatorComponent={() => <View style={{width: 20}} />}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                decelerationRate="fast"
-                snapToInterval={totalItemWidth}
-                disableIntervalMomentum
-                contentOffset={{x: totalItemWidth * offset, y: 0}}
-                getItemLayout={(data, index) => ({
-                    length: totalItemWidth,
-                    offset: totalItemWidth * index,
-                    index
-                })}
-                // pagingEnabled={true} 
-            />
-            <Button title="Close" onPress={handler} />
+            <SafeAreaProvider>
+                <SafeAreaView style={{flex: 1}}>
+                    <View style={{width: "95%", backgroundColor: "red", justifyContent: "space-between", alignItems: "center", height: 30, flexDirection: "row", alignSelf: "center"}}>
+                        <Pressable onPress={handleClose}>
+                            <Ionicons name="chevron-down" size={30} color="black" />
+                        </Pressable>
+                        <View style={{flexDirection: "row", alignItems: "center"}}>
+                            <Pressable onPress={async () => {
+                                const index = offset.current;
+                                const photo = photos[index];
+                                await handleShare(photo.uri);
+                            }}>
+                                <Entypo name="share" size={24} style={{marginRight: 10}} color="black" />     
+                            </Pressable>
+                            <Pressable onPress={async () => {
+                                const index = offset.current;
+                                const photo = photos[index];
+                                await handleDownload(photo.uri)
+                            }}>
+                                <Feather name="download" size={24} color="black" />                       
+                            </Pressable>
+                        </View>
+
+                    </View>
+                    <FlatList
+                        data={photos}
+                        renderItem={({item}) => {
+                            return (
+                                <CarouselPhoto uri={item.uri} />
+                                // <View style={{height: Dimensions.get('window').height, width: Dimensions.get('window').width}}>
+                                //     <FastImage 
+                                //         resizeMode={FastImage.resizeMode.contain} 
+                                //         style={{marginTop: -100, width: "100%", aspectRatio: height && width ? `${width}/${height}` : 'auto'}} 
+                                //         source={{uri: item.uri}} 
+                                //     />
+                                // </View>
+                            )
+                        }}
+                        ItemSeparatorComponent={() => <View style={{width: 20}} />}
+                        keyExtractor={(item) => item.id}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        decelerationRate="fast"
+                        snapToInterval={totalItemWidth}
+                        disableIntervalMomentum
+                        contentOffset={{x: totalItemWidth * offset.current, y: 0}}
+                        getItemLayout={(data, index) => ({
+                            length: totalItemWidth,
+                            offset: totalItemWidth * index,
+                            index
+                        })}
+                        onScroll={(e) => offset.current = e.nativeEvent.contentOffset.x / totalItemWidth}
+                    />
+                    {/* <Button title="Hello" onPress={() => console.log(offset.current)} /> */}
+                </SafeAreaView>
+            </SafeAreaProvider>
         </Modal>
     )
 }
