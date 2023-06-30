@@ -52,7 +52,7 @@ const ContactInfoScreen = ({route, navigation}) => {
            <Input label="PHONE NUMBER" width="80%" value={phoneNumber} keyboardType="number-pad" handler={(text) => setPhoneNumber(text)} secureTextEntry={false} />
             <Text style={styles.disclaimer}>We will send a verification code to your email.</Text>
            <Button     
-                borderRadius="25%"
+                borderRadius={20}
                 backgroundColor="#E8763A"
                 height={30}
                 aspectRatio={"3/1"}

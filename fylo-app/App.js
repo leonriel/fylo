@@ -5,7 +5,7 @@ import 'react-native-get-random-values'; // Required for AWS Cognito (Amplify Au
 import { useState, useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Alert, Dimensions, ActivityIndicator, SafeAreaView, Pressable, Text,View } from 'react-native';
-import { Image } from 'expo-image';
+import FastImage from 'react-native-fast-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -13,6 +13,7 @@ import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Ionicons } from '@expo/vector-icons'; 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Amplify, Auth, Hub } from 'aws-amplify';
 
@@ -188,65 +189,67 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={authContext}>
-      <StatusBar style="auto" />
-      <SafeAreaProvider>
-        <NavigationContainer onReady={onFinishedMounting} theme={{...DefaultTheme, colors: {...DefaultTheme.colors, background: "white"}}}>
-            {isSignedIn ? (
-              user ? (
-              <SessionsContext.Provider value={sessionsContext}>
-                  <Tab.Navigator 
-                    initialRouteName='Home' 
-                    // tabBarPosition='bottom' 
-                    initialLayout={{width: Dimensions.get('window').width}} 
-                    tabBar={({navigation}) => {
-                      return (<SafeAreaView>
-                        <View style={styles.header}>
-                          {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Playground")}>
-                            <ProfileIcon firstName={user.firstName} lastName={user.lastName} />
-                          </Pressable>} */}
-                          <Image style={styles.logo} source={require('./assets/logo-black.png')} />
-                          {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
-                            <Ionicons name="albums-outline" size={30} color="black" />                        
-                          </Pressable>} */}
-                        </View>
-                    </SafeAreaView>)}}
-                    screenOptions={{
-                        // swipeEnabled: false
-                    }}
-                    >
-                    {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
-                    <Tab.Screen 
-                        name="Playground"
-                        children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
-                    />
-                    <Tab.Screen 
-                        name="Home" 
-                        children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
-                    />
-                    <Tab.Screen 
-                        name="Sessions Navigator" 
-                        children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
-                    />
-                </Tab.Navigator>
-              </SessionsContext.Provider>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <AuthContext.Provider value={authContext}>
+        <StatusBar style="auto" />
+        <SafeAreaProvider>
+          <NavigationContainer onReady={onFinishedMounting} theme={{...DefaultTheme, colors: {...DefaultTheme.colors, background: "white"}}}>
+              {isSignedIn ? (
+                user ? (
+                <SessionsContext.Provider value={sessionsContext}>
+                    <Tab.Navigator 
+                      initialRouteName='Home' 
+                      // tabBarPosition='bottom' 
+                      initialLayout={{width: Dimensions.get('window').width}} 
+                      tabBar={({navigation}) => {
+                        return (<SafeAreaView>
+                          <View style={styles.header}>
+                            {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Playground")}>
+                              <ProfileIcon firstName={user.firstName} lastName={user.lastName} />
+                            </Pressable>} */}
+                            <FastImage style={styles.logo} source={require('./assets/logo-black.png')} />
+                            {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
+                              <Ionicons name="albums-outline" size={30} color="black" />                        
+                            </Pressable>} */}
+                          </View>
+                      </SafeAreaView>)}}
+                      screenOptions={{
+                          // swipeEnabled: false
+                      }}
+                      >
+                      {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
+                      <Tab.Screen 
+                          name="Playground"
+                          children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
+                      />
+                      <Tab.Screen 
+                          name="Home" 
+                          children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
+                      />
+                      <Tab.Screen 
+                          name="Sessions Navigator" 
+                          children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
+                      />
+                  </Tab.Navigator>
+                </SessionsContext.Provider>
+                ) : (
+                  <ActivityIndicator />
+                )
               ) : (
-                <ActivityIndicator />
+                <AuthStack.Navigator initialRoutName="Landing">
+                  <AuthStack.Screen name="Landing" component={LandingScreen} options={{headerShown: false}} />
+                  <AuthStack.Screen name="Sign In" component={SignInScreen} options={authScreenOptions} />
+                  <AuthStack.Screen name="Sign Up 1" component={NameScreen} options={authScreenOptions} />
+                  <AuthStack.Screen name="Sign Up 2" component={CredentialsScreen} options={authScreenOptions} />
+                  <AuthStack.Screen name="Sign Up 3" component={ContactInfoScreen} options={authScreenOptions} />
+                  <AuthStack.Screen name="Sign Up 4" component={VerificationScreen} options={authScreenOptions} />
+                </AuthStack.Navigator>
               )
-            ) : (
-              <AuthStack.Navigator initialRoutName="Landing">
-                <AuthStack.Screen name="Landing" component={LandingScreen} options={{headerShown: false}} />
-                <AuthStack.Screen name="Sign In" component={SignInScreen} options={authScreenOptions} />
-                <AuthStack.Screen name="Sign Up 1" component={NameScreen} options={authScreenOptions} />
-                <AuthStack.Screen name="Sign Up 2" component={CredentialsScreen} options={authScreenOptions} />
-                <AuthStack.Screen name="Sign Up 3" component={ContactInfoScreen} options={authScreenOptions} />
-                <AuthStack.Screen name="Sign Up 4" component={VerificationScreen} options={authScreenOptions} />
-              </AuthStack.Navigator>
-            )
-            }
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </AuthContext.Provider>
+              }
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </AuthContext.Provider>
+    </GestureHandlerRootView>
     );
 }
 

@@ -13,7 +13,7 @@ const NameScreen = ({navigation}) => {
            <Input label="First Name" width="80%" value={firstName} handler={(text) => setFirstName(text)} secureTextEntry={false} />
            <Input label="Last Name" width="80%" value={lastName} handler={(text) => setLastName(text)} secureTextEntry={false} />
            <Button     
-                borderRadius="25%"
+                borderRadius={20}
                 backgroundColor="#E8763A"
                 height={30}
                 aspectRatio={"3/1"}

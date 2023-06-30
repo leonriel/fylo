@@ -51,7 +51,7 @@ const VerificationScreen = ({route, navigation}) => {
            <Text style={styles.title}>Enter the code we sent to your email.</Text>
            <Input label="VERIFICATION CODE" width="80%" keyboardType="number-pad" value={code} handler={(text) => setCode(text)} secureTextEntry={false} />
            <Button     
-                borderRadius="25%"
+                borderRadius={20}
                 backgroundColor="#E8763A"
                 height={30}
                 aspectRatio={"3/1"}
@@ -63,7 +63,7 @@ const VerificationScreen = ({route, navigation}) => {
                 handler={handleVerification}
             />
             <Button     
-                borderRadius="25%"
+                borderRadius={20}
                 backgroundColor="#E8763A"
                 height={30}
                 aspectRatio={"3/1"}

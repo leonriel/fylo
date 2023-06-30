@@ -1,8 +1,9 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useRef, memo } from 'react';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
-import { SafeAreaView, FlatList, View, Button, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator } from 'react-native';
-import { Image } from 'expo-image';
+import { SafeAreaView, FlatList, View, Button, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions } from 'react-native';
+// import { Image } from 'expo-image';
+import FastImage from 'react-native-fast-image';
 import * as ImagePicker from 'expo-image-picker';
 import { endSession, uploadPhoto } from '../../utils/Sessions';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -14,7 +15,20 @@ import { Storage } from 'aws-amplify';
 import { v4 as uuidv4 } from 'uuid';
 import { CLOUDFRONT_DOMAIN } from '@env';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
+import PhotoCarousel from '../../components/PhotoCarousel';
+import Square from './Square';
+
+// TODO: Camera
+// TODO: Integrate Create Session Modal 6/30
+// TODO: How to make react native modals less laggy/cluncky? 6/30
+// TODO: Redesign session "settings" 6/30
+// TODO: Allow users to edit profile page 6/30
+// TODO: How to preload images so they don't appear staggered 6/30
+// TODO: Find a way to make FlatList gap logic less hacky 6/30
+// TODO: Prevent FlatList from reloading all the time... React memo (pure component)? 6/30
+// TODO: App flow??
+// TODO: Navigation Tab Bar?
+// TODO: Friends?
 
 const PhotosScreen = ({ navigation, session, user }) => {
     const { refreshUser } = useContext(AuthContext);
@@ -24,6 +38,10 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [inviteModalVisible, setInviteModalVisible] = useState(false);
     const [searchedUsers, setSearchedUsers] = useState([]);
     const [activityIndicator, setActivityIndicator] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [offset, setOffset] = useState(0);
+
+    const modalRef = useRef()
 
     useEffect(() => {
         navigation.setOptions({
@@ -46,16 +64,19 @@ const PhotosScreen = ({ navigation, session, user }) => {
     }, []);
 
     const loadPhotos = async () => {
-        // console.log(session);
         const numPhotos = session.photos.length;
+        // await Promise.all(session.photos.map((photo) => {
+        //     const url = `${CLOUDFRONT_DOMAIN}/public/${photo.key}`
+        //     return Image.prefetch(url)
+        // }));
+
         const imgComponents = session.photos.map((photo, index) => {
+            const url = `${CLOUDFRONT_DOMAIN}/public/${photo.key}`
             return ({
                 id: numPhotos - index,
-                uri: `${CLOUDFRONT_DOMAIN}/public/${photo.key}`
+                uri: url
             })
         });
-
-        // console.log(imgComponents);
 
         setPhotos(imgComponents);
 
@@ -64,9 +85,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const handlePhotoUpload = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.All,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
+            quality: 1
         });
           
         if (!result.canceled) {
@@ -78,7 +97,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                 await uploadPhoto(session, blob, user).then(async (resp) => {
                     const uri = await blobToBase64(blob);
                     setPhotos((currentPhotos) => [{
-                        id: currentPhotos.length,
+                        id: currentPhotos.length + 1,
                         uri: uri
                     },
                     ...currentPhotos])
@@ -183,7 +202,12 @@ const PhotosScreen = ({ navigation, session, user }) => {
           }
     }
 
-    const Photo = ({ uri, id }) => {
+    const handleOpenCarousel = async (index) => {
+        setOffset(index);
+        setModalVisible(true);
+    }
+
+    const Photo = ({ uri, id, index }) => {
         let gap;
         const numPhotos = photos.length;
         if (numPhotos % 4 == 0 && id % 4 != 0) {
@@ -203,59 +227,86 @@ const PhotosScreen = ({ navigation, session, user }) => {
         }
 
         return (
-            <Pressable onLongPress={() => handleShare(uri)} style={{flex: 1, aspectRatio: 1, minWidth: "25%", maxWidth: "25%", ...gap}}>
-                <Image style={{height: "100%", width: "100%"}} source={uri} /> 
+            <Pressable onPress={() => handleOpenCarousel(index)} onLongPress={() => handleShare(uri)} style={{flex: 1, aspectRatio: 1, minWidth: Dimensions.get('window').width / 4, maxWidth: Dimensions.get('window').width / 4, ...gap}}>
+                <FastImage style={{height: "100%", width: "100%"}} source={{uri: uri}} /> 
             </Pressable> 
         )
     }
 
+    const [modal, setModal] = useState(false);
+
     return (
-            <SafeAreaView style={{flex: 1}}>
-                {activityIndicator && <ActivityIndicator />} 
-                <View style={{width: "100%", flex: 4, justifyContent: "center", alignSelf: "center"}}>
-                    <FlatList 
-                        data={photos}
-                        renderItem={({item}) => {
-                            return <Photo uri={item.uri} id={item.id} />
-                        }}
-                        keyExtractor={(item) => item.id}
-                        numColumns={4}
-                        ItemSeparatorComponent={() => <View style={{height: 1}} />}
-                        refreshing={true}
-                        scrollEnabled={true}
-                    />
-                </View>
-                <Modal
-                    animationType="slide"
-                    visible={actionsModalVisible}
-                    onRequestClose={() => setActionsModalVisible(false)}
-                >
-                    <SafeAreaView style={styles.container}>
-                            {session.isActive ? (
-                            <>
-                                <Button title="Upload Photo" onPress={handlePhotoUpload} />
-                                <Button title="Take Picture" onPress={handlePictureTake} />
-                                <Button title="Invite" onPress={() => setInviteModalVisible(true)} />
-                                <Modal
-                                    animationType="slide"
-                                    visible={inviteModalVisible}
-                                    onRequestClose={() => setInviteModalVisible(false)}
-                                >
-                                    <SafeAreaView style={styles.container}>
-                                        <Input label="Search" width="80%" handler={(text) => handleSearchUsers(text)} />
-                                        {searchedUsers ? searchedUsers.map(searchedUser => (
-                                            <UserListItem key={searchedUser.username} firstName={searchedUser.firstName} lastName={searchedUser.lastName} fullName={searchedUser.fullName} username={searchedUser.username} />
-                                        )) : null}
-                                        <Button title="Close" onPress={() => setInviteModalVisible(false)} />
-                                    </SafeAreaView>
-                                </Modal>
-                                <Button title="End Session" onPress={handleEndSession} />
-                            </>
-                        ) : null}
-                        <Button title="Close" onPress={() => setActionsModalVisible(false)} />
-                    </SafeAreaView>
-                </Modal>
-            </SafeAreaView>
+        <SafeAreaView style={{flex: 1}}>
+            {activityIndicator && <ActivityIndicator />} 
+            <View style={{width: "100%", flex: 4, justifyContent: "center", alignSelf: "center"}}>
+                <FlatList 
+                    data={photos}
+                    renderItem={({item, index}) => {
+                        return <Photo uri={item.uri} id={item.id} index={index} />
+                    }}
+                    keyExtractor={(item) => item.id}
+                    numColumns={4}
+                    ItemSeparatorComponent={() => <View style={{height: 1}} />}
+                    refreshing={true}
+                    scrollEnabled={true}
+                    // horizontal
+                />
+            </View>
+            <Button title="Open" onPress={() => setModal(true)} />
+            <Modal
+                visible={modal}
+                animationType="slide"
+            >
+                <SafeAreaView style={{flex: 1}}>
+                <FlatList 
+                    data={photos}
+                    renderItem={({item, index}) => {
+                        return <Square id={index + 1} />
+                    }}
+                    keyExtractor={(item) => item.id}
+                    numColumns={4}
+                    ItemSeparatorComponent={() => <View style={{height: 1}} />}
+                    refreshing={true}
+                    scrollEnabled={true}
+                    // horizontal={listHorizontal}
+                />
+                    {/* <Square id={1} />
+                    <Square id={2} /> */}
+                    <Button title="Close" onPress={() => setModal(false)} />
+                </SafeAreaView>
+            </Modal>
+            <PhotoCarousel visible={modalVisible} photos={photos} handler={() => setModalVisible(false)} offset={offset} />
+            <Modal
+                animationType="slide"
+                visible={actionsModalVisible}
+                onRequestClose={() => setActionsModalVisible(false)}
+            >
+                <SafeAreaView style={styles.container}>
+                        {session.isActive ? (
+                        <>
+                            <Button title="Upload Photo" onPress={handlePhotoUpload} />
+                            <Button title="Take Picture" onPress={handlePictureTake} />
+                            <Button title="Invite" onPress={() => setInviteModalVisible(true)} />
+                            <Modal
+                                animationType="slide"
+                                visible={inviteModalVisible}
+                                onRequestClose={() => setInviteModalVisible(false)}
+                            >
+                                <SafeAreaView style={styles.container}>
+                                    <Input label="Search" width="80%" handler={(text) => handleSearchUsers(text)} />
+                                    {searchedUsers ? searchedUsers.map(searchedUser => (
+                                        <UserListItem key={searchedUser.username} firstName={searchedUser.firstName} lastName={searchedUser.lastName} fullName={searchedUser.fullName} username={searchedUser.username} />
+                                    )) : null}
+                                    <Button title="Close" onPress={() => setInviteModalVisible(false)} />
+                                </SafeAreaView>
+                            </Modal>
+                            <Button title="End Session" onPress={handleEndSession} />
+                        </>
+                    ) : null}
+                    <Button title="Close" onPress={() => setActionsModalVisible(false)} />
+                </SafeAreaView>
+            </Modal>
+        </SafeAreaView>
     )
 }
 

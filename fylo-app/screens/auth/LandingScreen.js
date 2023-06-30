@@ -1,5 +1,6 @@
 import { SafeAreaView, View, Dimensions, StyleSheet } from 'react-native';
-import { Image } from 'expo-image';
+// import { Image } from 'expo-image';
+import FastImage from 'react-native-fast-image';
 import Button from '../../components/Button';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -8,9 +9,9 @@ const LandingScreen = ({navigation}) => {
         <View style={{flex: 1}}>
             <LinearGradient colors={["#5DC3CC", "#A39C83", "#E8763A"]} style={{width: Dimensions.get('window').width, height: Dimensions.get('window').height}}>
                 <SafeAreaView style={{flex: 1, justifyContent: "center"}}>
-                    <Image style={{height: 50, aspectRatio: "228/76", alignSelf: "center", margin: 16}} source={require("../../assets/logo-white.png")} />
+                    <FastImage style={{height: 50, aspectRatio: "228/76", alignSelf: "center", margin: 16}} source={require("../../assets/logo-white.png")} />
                     <Button 
-                        borderRadius="25%"
+                        borderRadius={50}
                         height={50}
                         aspectRatio="5/1"
                         margin={16}
@@ -22,7 +23,7 @@ const LandingScreen = ({navigation}) => {
                         handler={() => navigation.navigate("Sign Up 1")}
                     />
                     <Button 
-                        borderRadius="25%"
+                        borderRadius={40}
                         height={50}
                         aspectRatio="5/1"
                         margin={0}

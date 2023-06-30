@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, FlatList, ScrollView, Pressable, Alert } from 'react-native';
-import { Image } from 'expo-image';
+// import { Image } from 'expo-image';
+import FastImage from 'react-native-fast-image';
 import SessionListItem from '../components/SessionListItem';
 import { getPendingIncomingSessionInvites } from '../utils/Sessions';
 import Button from '../components/Button';
@@ -72,7 +73,7 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
                     <Text style={styles.fullName}>{user.fullName}</Text>
                     <Text style={styles.username}>{user.username}</Text>
                     <Button 
-                        borderRadius="25%" 
+                        borderRadius={20} 
                         backgroundColor="#E8763A" 
                         height={25} aspectRatio="3/1" 
                         fontFamily="Quicksand-SemiBold" 
@@ -92,7 +93,7 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
                             sessionName={session.name} 
                             numContributors={session.contributors.length} 
                             button1={<Button 
-                                borderRadius="25%"
+                                borderRadius={20}
                                 backgroundColor="#E8763A"
                                 height={25}
                                 marginRight={10}
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     initialsContainer: {
         borderWidth: 1, 
         borderColor: "black", 
-        borderRadius: "50%", 
+        borderRadius: 75 / 2, 
         height: 75, 
         width: 75, 
         justifyContent: "center", 

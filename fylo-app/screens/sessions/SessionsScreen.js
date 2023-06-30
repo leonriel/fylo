@@ -1,5 +1,6 @@
 import { Pressable, View, SafeAreaView, StyleSheet } from 'react-native';
-import { Image } from 'expo-image';
+// import { Image } from 'expo-image';
+import FastImage from 'react-native-fast-image';
 import SessionListItem from  '../../components/SessionListItem';
 import { AntDesign } from '@expo/vector-icons'; 
 

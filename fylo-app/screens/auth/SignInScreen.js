@@ -22,7 +22,7 @@ const SignInScreen = ({ navigation }) => {
             <Input label="USERNAME, EMAIL, OR PHONE" width="80%" value={username} handler={(text) => setUsername(text)} secureTextEntry={false} />
             <Input label="PASSWORD" width="80%" value={password} handler={(text) => setPassword(text)} secureTextEntry={true} />
             <Button     
-                borderRadius="25%"
+                borderRadius={20}
                 backgroundColor="#E8763A"
                 height={30}
                 aspectRatio={"3/1"}

@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'black',
-        borderRadius: "20%",
+        borderRadius: 30,
         aspectRatio: "3/4"
     },
 

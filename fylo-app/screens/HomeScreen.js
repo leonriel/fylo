@@ -7,7 +7,8 @@ import { SessionsContext } from '../contexts/SessionsContext';
 import { createSession } from '../utils/Sessions';
 import { LinearGradient } from 'expo-linear-gradient';
 import ProfileIcon from '../components/ProfileIcon';
-import { Image } from 'expo-image';
+// import { Image } from 'expo-image';
+import FastImage from 'react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons'; 
 import Input from '../components/Input';
 
@@ -54,7 +55,7 @@ const HomeScreen = ({ navigation, sessions, user }) => {
                                     <Text style={styles.startSessionText}>Start</Text>
                                     <Pressable onPress={() => setCreateSessionModalVisible(true)}>
                                         <View style={styles.startSessionButton}>
-                                            <Image style={styles.icon} source={require('../assets/icon-grey.png')} />
+                                            <FastImage style={styles.icon} source={require('../assets/icon-grey.png')} />
                                         </View>
                                     </Pressable>
                                     <Text style={styles.startSessionText}>Session</Text>
