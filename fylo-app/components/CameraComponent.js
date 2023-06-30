@@ -91,7 +91,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'black',
-        borderRadius: 30,
+        borderRadius: 15,
+        overflow: "hidden",
         aspectRatio: "3/4"
     },
 

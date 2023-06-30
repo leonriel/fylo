@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Input from '../components/Input';
 
 const HomeScreen = ({ navigation, sessions, user }) => {
-    const { signOut, refreshUser } = useContext(AuthContext);
+    const { refreshUser } = useContext(AuthContext);
     const { reloadSessions } = useContext(SessionsContext);
     
     const [createSessionModalVisible, setCreateSessionModalVisible] = useState(false);

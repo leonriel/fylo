@@ -41,7 +41,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.fylo-app",
       "infoPlist": {
-        "NSPhotoLibraryAddUsageDescription": "This app saves photos to your library."
+        "NSPhotoLibraryAddUsageDescription": "Fylo accesses your photos to let you share them with your friends."
       }
     },
     "android": {

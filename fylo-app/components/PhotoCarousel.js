@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, FlatList, View, Dimensions, Button, Pressable, Alert } from 'react-native';
+import { Modal, FlatList, View, Dimensions, Pressable, Alert, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
@@ -8,10 +8,7 @@ import { Ionicons, Entypo, Feather } from '@expo/vector-icons';
 import { v4 as uuidv4 } from 'uuid';
 import * as MediaLibrary from 'expo-media-library';
 
-// TODO: Add share and download functionalities
-
 // offset is a react ref from PhotosScreen.js
-
 const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
     const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
 
@@ -41,7 +38,7 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
         try {
             if (!permissionResponse.granted) {
                 const result = await requestPermission();
-                if (!result) {
+                if (!result.granted) {
                     Alert.alert("Unable to save media to your device.");
                     throw new Error('Invalid permissions.');
                 }
@@ -53,9 +50,9 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                 downloadPath
             );
 
-            // console.log(localUrl);
+            await MediaLibrary.saveToLibraryAsync(localUrl);
 
-            MediaLibrary.saveToLibraryAsync(localUrl);
+            Alert.alert("Saved!")
         } catch (error) {
             console.log(error.message);
         }
@@ -66,7 +63,7 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
         const [height, setHeight] = useState(null);
 
         return (
-            <View style={{height: "100%", width: Dimensions.get('window').width, justifyContent: "center"}}>
+            <View style={styles.mediaContainer}>
                 <FastImage 
                     resizeMode={FastImage.resizeMode.contain} 
                     style={{width: "100%", aspectRatio: height && width ? `${width}/${height}` : 'auto'}} 
@@ -88,11 +85,11 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
         >
             <SafeAreaProvider>
                 <SafeAreaView style={{flex: 1}}>
-                    <View style={{width: "95%", backgroundColor: "red", justifyContent: "space-between", alignItems: "center", height: 30, flexDirection: "row", alignSelf: "center"}}>
+                    <View style={styles.header}>
                         <Pressable onPress={handleClose}>
                             <Ionicons name="chevron-down" size={30} color="black" />
                         </Pressable>
-                        <View style={{flexDirection: "row", alignItems: "center"}}>
+                        <View style={styles.actions}>
                             <Pressable onPress={async () => {
                                 const index = offset.current;
                                 const photo = photos[index];
@@ -115,13 +112,6 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                         renderItem={({item}) => {
                             return (
                                 <CarouselPhoto uri={item.uri} />
-                                // <View style={{height: Dimensions.get('window').height, width: Dimensions.get('window').width}}>
-                                //     <FastImage 
-                                //         resizeMode={FastImage.resizeMode.contain} 
-                                //         style={{marginTop: -100, width: "100%", aspectRatio: height && width ? `${width}/${height}` : 'auto'}} 
-                                //         source={{uri: item.uri}} 
-                                //     />
-                                // </View>
                             )
                         }}
                         ItemSeparatorComponent={() => <View style={{width: 20}} />}
@@ -139,11 +129,30 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                         })}
                         onScroll={(e) => offset.current = e.nativeEvent.contentOffset.x / totalItemWidth}
                     />
-                    {/* <Button title="Hello" onPress={() => console.log(offset.current)} /> */}
                 </SafeAreaView>
             </SafeAreaProvider>
         </Modal>
     )
 }
+
+const styles = StyleSheet.create({
+    header: {
+        width: "95%", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        height: 30, 
+        flexDirection: "row", 
+        alignSelf: "center"
+    },
+    actions: {
+        flexDirection: "row", 
+        alignItems: "center"
+    },
+    mediaContainer: {
+        height: "100%", 
+        width: Dimensions.get('window').width, 
+        justifyContent: "center"
+    }
+})
 
 export default PhotoCarousel;

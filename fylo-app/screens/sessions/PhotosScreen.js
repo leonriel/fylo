@@ -215,7 +215,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
     return (
         <View style={{flex: 1}}>
             {activityIndicator && <ActivityIndicator />} 
-            <View style={{width: "100%", flex: 4, justifyContent: "center", alignSelf: "center"}}>
+            <View style={{width: "100%", justifyContent: "center", alignSelf: "center"}}>
                 <FlatList 
                     data={photos}
                     renderItem={({item, index}) => {
