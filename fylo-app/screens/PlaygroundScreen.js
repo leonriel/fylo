@@ -13,7 +13,10 @@ const PlaygroundScreen = ({user, sessions}) => {
     const [image, setImage] = useState(null);
     const [hasAudioPermission, setHasAudioPermission] = useState(null);
     const [record, setRecord] = useState(null);
-    const [status, setStatus] = useState({})
+    const [status, setStatus] = useState({});
+    const [isRecording, setIsRecording] = useState(false);
+    const [photoMode, setPhotoMode] = useState(true);
+    const [videoMode, setVideoMode] = useState(false);
     
     useEffect(() => {
         (async () =>{
@@ -60,6 +63,7 @@ const PlaygroundScreen = ({user, sessions}) => {
             const video = await camera.recordAsync({maxDuration: 15})
             console.log(video)
             setRecord(video.uri)
+            this.state
         } catch (error) {
             console.warn(error)
         }
@@ -90,10 +94,15 @@ const PlaygroundScreen = ({user, sessions}) => {
         setType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
     }
     
+    function toggleMode() {
+        setPhotoMode(current => (current === true ? false : true))
+        setVideoMode(current => (current === true ? false : true))
+    }
+
     return (
         <View style = {styles.container}>
-            {!image && !record && (
-                <Camera style={styles.camera} type={type} flashMode={flash} ref={(r) => {camera = r}}>
+            {photoMode && !image && (
+                 <Camera style={styles.camera} ratio={'4:3'} type={type} flashMode={flash} ref={(r) => {camera = r}}>
                     <View style={{flex: 1, alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', margin: 30}}>
                         <Button icon='flash' size={30} color={flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
                         onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
@@ -101,30 +110,51 @@ const PlaygroundScreen = ({user, sessions}) => {
                         <Button onPress={toggleCameraType} icon='swap' color='#fff' size={30} margin={10}/>
                     </View>
                     <View style = {styles.buttonContainer}>
-                        {/* <Button onPress={takePicture} icon='circle' color ='#fff' size='80' margin={10} /> */}
-                        <VideoButton onPress={takePicture} onLongPress={takeVideo} onPressOut={stopVideo} icon='circle' color ='#fff' size={80} margin={10} />
+                        <Button onPress={takePicture} icon='circle' color ='#fff' size='80' margin={10} />
+                        <Button onPress={toggleMode} icon='image' color='#fff' size={30} margin={10}/>
                     </View>
                 </Camera>)}
-            {image && (
+            {photoMode && image && (
                 <View style={styles.camera}>
                     <ImageBackground source={{uri: image}} style={styles.camera}>
                         <View style={styles.buttonContainer}>
-                            <Button onPress={() => {setImage(null)}} icon='retweet' color='#fff' size={30} text='Retake?'/>
+                            <Button onPress={() => {setImage(null)}} icon='retweet' color='#fff' size={30} text='Retake Image?'/>
                         </View>
                     </ImageBackground>
                 </View>)}
-            {record && (
+            {videoMode && !record && (
+                <Camera style={styles.camera} ratio={'16:9'} type={type} flashMode={flash} ref={(r) => {camera = r}}>
+                    <View style={{flex: 1, alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', margin: 30}}>
+                        <Button icon='flash' size={30} color={flash === Camera.Constants.FlashMode.off ? 'gray' : 'white'} 
+                        onPress={() => {setFlash(flash === Camera.Constants.FlashMode.off ? 
+                            Camera.Constants.FlashMode.on : Camera.Constants.FlashMode.off)}}/>
+                        <Button onPress={toggleCameraType} icon='swap' color='#fff' size={30} margin={10}/>
+                    </View>
+                    <View style = {styles.buttonContainer}>
+                        <Button onPress={
+                            () => {(isRecording ? stopVideo : takeVideo) ; 
+                            (isRecording ? setIsRecording(false) : setIsRecording(true))}
+                        } 
+                            icon={isRecording ? 'controller-stop' : 'controller-record'} color ='#fff' size='80' margin={10} />
+                        <Button onPress={toggleMode} icon='image' color='#fff' size={30} margin={10}/>
+                    </View>
+                </Camera>)}
+            {videoMode && record && (
                 <View style={styles.camera}>
-                    {/* <Video 
+                    <Video 
                         ref={record} 
                         style={styles.camera} 
-                        source={{uri: record}} 
-                        useNativeControls 
+                        source={{uri: record}}  
                         resizeMode='contain' 
-                        isLooping
+                        isLooping = {true}
                         onPlaybackStatusUpdate={status => (setStatus(()=>status))}
-                    />  */}
-                </View> )}
+                    />
+                    <View style = {styles.buttonContainer}>
+                        <Button onPress={() => {status.isPlaying ? record.current.pauseAsync() : record.current.playAsync()}}
+                            icon={status.isPlaying ? 'controller-paus' : 'controller-play'} color ='#fff' size='80' margin={10} />
+                        <Button onPress={() => {setRecord(null)}} icon='retweet' color='#fff' size={30} text='Retake Video?'/>
+                    </View>
+                </View>)}
         </View>
     )
 }
@@ -156,6 +186,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         flexDirection: 'row'
     }
+
 
 });
 
