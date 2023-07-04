@@ -12,6 +12,16 @@ export const getUsers = async (users) => {
     }
 }
 
+export const getAllUsers = async () => {
+    try {
+        const res = await axios.post("https://fylo-app-server.herokuapp.com/user/list");
+
+        return res.data;
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
 export const searchUsers = async (query) => {
     try {
         const res = await axios.post("https://fylo-app-server.herokuapp.com/user/search", {

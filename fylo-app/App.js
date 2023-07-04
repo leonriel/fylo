@@ -197,23 +197,40 @@ export default function App() {
               {isSignedIn ? (
                 user ? (
                 <SessionsContext.Provider value={sessionsContext}>
+                    <SafeAreaView>
+                      <View style={styles.header}>
+                        <FastImage style={styles.logo} source={require('./assets/logo-black.png')} />
+                      </View>
+                    </SafeAreaView>
                     <Tab.Navigator 
                       initialRouteName='Home' 
-                      // tabBarPosition='bottom' 
+                      tabBarPosition='bottom' 
                       initialLayout={{width: Dimensions.get('window').width}} 
-                      tabBar={({navigation}) => {
-                        return (<SafeAreaView>
-                          <View style={styles.header}>
-                            {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Playground")}>
-                              <ProfileIcon firstName={user.firstName} lastName={user.lastName} />
-                            </Pressable>} */}
-                            <FastImage style={styles.logo} source={require('./assets/logo-black.png')} />
-                            {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
-                              <Ionicons name="albums-outline" size={30} color="black" />                        
-                            </Pressable>} */}
-                          </View>
-                      </SafeAreaView>)}}
+                      // tabBar={({navigation}) => {
+                      //   return (<SafeAreaView>
+                      //     <View style={styles.header}>
+                      //       {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Playground")}>
+                      //         <ProfileIcon firstName={user.firstName} lastName={user.lastName} />
+                      //       </Pressable>} */}
+                      //       <FastImage style={styles.logo} source={require('./assets/logo-black.png')} />
+                      //       {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
+                      //         <Ionicons name="albums-outline" size={30} color="black" />                        
+                      //       </Pressable>} */}
+                      //     </View>
+                      // </SafeAreaView>)}}
                       screenOptions={{
+                        tabBarStyle: {
+                          height: "8%",
+                          backgroundColor: "powderblue",
+                          borderRadius: 20,
+                          shadowOffset: { width: 0, height: -3},
+                          shadowOpacity: 0.2,
+                          shadowRadius: 5
+                        },
+                        tabBarIndicator: () => {
+                          return null
+                        },
+                        animationEnabled: false
                           // swipeEnabled: false
                       }}
                       >
@@ -221,14 +238,38 @@ export default function App() {
                       <Tab.Screen 
                           name="Playground"
                           children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
+                          options={{
+                            tabBarShowLabel: false,
+                            tabBarIcon: ({focused, color}) => {
+                              return (
+                                focused ? <Ionicons name="person" size={24} color="black" /> : <Ionicons name="person-outline" size={24} color="black" />
+                              )
+                            }
+                          }}
                       />
                       <Tab.Screen 
                           name="Home" 
                           children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
+                          options={{
+                            tabBarShowLabel: false,
+                            tabBarIcon: ({focused, color}) => {
+                              return (
+                                focused ? <Ionicons name="home" size={24} color="black" /> : <Ionicons name="home-outline" size={24} color="black" />
+                              )
+                            }
+                          }}
                       />
                       <Tab.Screen 
                           name="Sessions Navigator" 
                           children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
+                          options={{
+                            tabBarShowLabel: false,
+                            tabBarIcon: ({focused, color}) => {
+                              return (
+                                focused ? <Ionicons name="albums" size={24} color="black" /> : <Ionicons name="albums-outline" size={24} color="black" />
+                              )
+                            }
+                          }}
                       />
                   </Tab.Navigator>
                 </SessionsContext.Provider>

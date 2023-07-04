@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
-import { Button, SafeAreaView, Modal, TextInput, Text, View, Dimensions, Pressable, StyleSheet } from 'react-native';
-// import { Camera, CameraType } from 'expo-camera';
+import { Button, Modal, TextInput, Text, View, Dimensions, Pressable, StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import CameraComponent from '../components/CameraComponent';
 import { AuthContext } from '../contexts/AuthContext';
 import { SessionsContext } from '../contexts/SessionsContext';
@@ -10,6 +10,7 @@ import ProfileIcon from '../components/ProfileIcon';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
 import { Ionicons } from '@expo/vector-icons'; 
+import NameSessionScreen from './create_session/NameSessionScreen';
 import Input from '../components/Input';
 
 const HomeScreen = ({ navigation, sessions, user }) => {
@@ -18,7 +19,6 @@ const HomeScreen = ({ navigation, sessions, user }) => {
     
     const [createSessionModalVisible, setCreateSessionModalVisible] = useState(false);
     const [sessionName, setSessionName] = useState(null);
-
 
     const handleSessionCreation = async () => {
         const newSession = await createSession(user._id, sessionName);
@@ -33,7 +33,7 @@ const HomeScreen = ({ navigation, sessions, user }) => {
     return (
         <View style={{flex: 1}}>
             {/* <LinearGradient colors={["#5DC3CC", "#A39C83", "#E8763A"]} style={{width: Dimensions.get('window').width, height: Dimensions.get('window').height}}> */}
-                <SafeAreaView style={styles.container}>
+                <View style={styles.container}>
                     {/* <View style={styles.header}>
                         <Pressable onPress={() => navigation.jumpTo("Playground")}>
                             <ProfileIcon firstName={user.firstName} lastName={user.lastName} />
@@ -63,18 +63,23 @@ const HomeScreen = ({ navigation, sessions, user }) => {
                                 <Modal
                                     animationType="slide"
                                     visible={createSessionModalVisible}
+                                    onRequestClose={() => setCreateSessionModalVisible(false)}
                                 >
-                                    <SafeAreaView style={styles.modal}>
-                                        <Text>Session Name</Text>
-                                        <Input width="80%" label="Session Name" value={sessionName} handler={(text) => setSessionName(text)} />
-                                        <Button title="Create" onPress={handleSessionCreation} />
-                                        <Button title="Cancel" onPress={() => setCreateSessionModalVisible(false)} />
-                                    </SafeAreaView>
+                                    <SafeAreaProvider>
+                                        <SafeAreaView style={styles.container}>
+                                            <View style={styles.header}>
+                                                <Pressable onPress={() => setCreateSessionModalVisible(false)} style={({ pressed }) => pressed && styles.pressedItem}>
+                                                    <Ionicons name="chevron-down" size={30} color="black" />
+                                                </Pressable>
+                                            </View>
+                                            <NameSessionScreen navigation={navigation} user={user} />
+                                        </SafeAreaView>
+                                    </SafeAreaProvider>
                                 </Modal>
                             </>
                         )}
                     </View>
-                </SafeAreaView>
+                </View>
             {/* </LinearGradient> */}
         </View>
     );
@@ -91,6 +96,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         alignSelf: "center", 
         width: "90%"
+    },
+    pressedItem: {
+        opacity: 0.5
     },
     input: {
         width: '80%',

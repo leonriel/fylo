@@ -23,7 +23,7 @@ const UserListItem = ({firstName, lastName, fullName, username, button, handler}
                     </Text>
                 </View>
             </View>
-            <Pressable onPress={handler}>
+            <Pressable style={{justifyContent: "center"}} onPress={handler}>
                 {button}
             </Pressable>
         </View>
@@ -33,8 +33,10 @@ const UserListItem = ({firstName, lastName, fullName, username, button, handler}
 const styles = StyleSheet.create({
     user: {
         flexDirection: "row",
-        width: "85%",
+        width: "100%",
         justifyContent: "space-between",
+        alignSelf: "center",
+        alignContent: "center",
         marginTop: 8,
         marginBottom: 8
     },

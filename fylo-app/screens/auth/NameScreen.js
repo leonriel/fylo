@@ -24,7 +24,6 @@ const NameScreen = ({navigation}) => {
                 margin={24}
                 handler={() => navigation.navigate('Sign Up 2', {firstName: firstName.trim(), lastName: lastName.trim()})}
             />
-
         </SafeAreaView>
     )
 }

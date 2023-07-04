@@ -13,7 +13,7 @@ export const createSession = async (userId, sessionName) => {
     
         return resp.data;
     } catch (error) {
-        console.log(error.message);
+        console.log(error.response.data);
     }
 }
 

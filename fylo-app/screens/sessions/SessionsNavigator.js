@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { HeaderStyleInterpolators, createStackNavigator } from "@react-navigation/stack";
-import { View, Pressable, Text, StyleSheet } from 'react-native';
+import { View, Pressable, Text, StyleSheet, Button } from 'react-native';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
 import SessionsScreen from './SessionsScreen';
 import PhotosScreen from './PhotosScreen';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons'; 
 import { CLOUDFRONT_DOMAIN } from '@env';
 
@@ -31,13 +31,25 @@ const SessionsNavigator = ({ navigation, sessions, user }) => {
                     options={{
                         header: ({navigation}) => {
                             return <View style={styles.header}>
-                                <Pressable onPress={() => navigation.goBack()}>
+                                <Pressable onPress={() => navigation.goBack()} style={({pressed}) => [pressed && {opacity: 0.5}, {flex: 1}]}>
                                     <Ionicons name="chevron-back-outline" size={30} color="black" />
                                 </Pressable>
-                                <Text style={{fontFamily: "Quicksand-Bold", fontSize: 20}}>{session.name}</Text>
-                                <Pressable>
-                                    <MaterialCommunityIcons name="dots-vertical" size={30} color="black" />
+                                <Pressable style={{flex: 6, flexDirection: "row", justifyContent: "flex-start"}}>
+                                    <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 24}}>{session.name}</Text>
                                 </Pressable>
+                                <View style={{flexDirection: "row", alignItems: "center", flex: 2, justifyContent: "flex-end"}}>
+                                    {session.isActive && (
+                                        <>
+                                            <Pressable style={({pressed}) => [pressed && {opacity: 0.5}]}>
+                                                <AntDesign name="adduser" size={24} color="black" />
+                                            </Pressable>
+                                            <Pressable style={({pressed}) => [pressed && {opacity: 0.5}, {marginLeft: 5}]}>
+                                                <AntDesign name="plus" size={24} color="black" />
+                                            </Pressable>
+                                            {session.owner == user._id && <Button title="End" />}
+                                        </>
+                                    )}
+                                </View>
                             </View>
                         },
                         headerStyle: {
@@ -62,7 +74,7 @@ const SessionsNavigator = ({ navigation, sessions, user }) => {
 
 const styles = StyleSheet.create({
     header: {
-        width: "100%", 
+        width: "95%", 
         flexDirection: "row", 
         alignItems: "center", 
         justifyContent: "space-between", 

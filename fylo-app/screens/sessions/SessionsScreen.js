@@ -1,4 +1,4 @@
-import { Pressable, View, SafeAreaView, StyleSheet } from 'react-native';
+import { Pressable, View, SafeAreaView, StyleSheet, FlatList, Text } from 'react-native';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
 import SessionListItem from  '../../components/SessionListItem';
@@ -7,20 +7,47 @@ import { AntDesign } from '@expo/vector-icons';
 const SessionsScreen = ({ navigation, sessions, user }) => {
     return (
         <SafeAreaView style={{flex: 1, alignItems: "center"}}>
-            {/* <View style={styles.header}>
-                <Image style={styles.logo} source={require('../../assets/logo-black.png')} />
-            </View> */}
+            <View style={styles.header}>
+                <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 30}}>Sessions</Text>
+            </View>
             <View style={styles.sessionsContainer}>
-                {sessions.map(session => {
-                    return <SessionListItem 
-                        sessionName={session.name} 
-                        numContributors={session.contributors.length}
-                        button1={<Pressable onPress={() => navigation.navigate(session._id)}>
-                            <AntDesign name="select1" size={24} color="black" style={{marginLeft: "auto"}} />
-                        </Pressable>}
-                        key={session._id} 
-                    />
-                })}
+                <FlatList
+                    data={sessions}
+                    renderItem={({item}) => {
+                        const date = new Date(item.createdAt);
+                        const stringDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric'});
+
+                        return (<Pressable 
+                            onPress={() => navigation.navigate(item._id)} 
+                            style={{
+                                width: "90%", 
+                                alignSelf: "center", 
+                                backgroundColor: "white", 
+                                shadowOffset: { width: 0, height: 2}, 
+                                shadowOpacity: 0.25,
+                                shadowRadius: 5, 
+                                borderRadius: 10
+                            }}
+                        >
+                            <View style={{width: "95%", flexDirection: "row", alignSelf: "center"}}>
+                                <SessionListItem 
+                                    sessionName={item.name} 
+                                    numContributors={item.contributors.length}
+                                    button1={
+                                        <View style={{flexDirection: 'row', alignItems: "center"}}>
+                                            <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 20}}>{stringDate}</Text>
+                                            <View style={{height: 20, width: 1, backgroundColor: 'black', opacity: 1, marginHorizontal: 5}} />
+                                            <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 20}}>{item.photos.length}</Text>
+                                        </View>
+                                    }
+                                />
+                            </View>
+                        </Pressable>
+                    )}}
+                    keyExtractor={(item) => item._id}
+                    ItemSeparatorComponent={() => <View style={{height: 10, backgroundColor: "transparent"}} />}
+                    contentContainerStyle={{paddingVertical: 10, height: "100%"}}
+                />
             </View>
         </SafeAreaView>
     );
@@ -29,7 +56,7 @@ const SessionsScreen = ({ navigation, sessions, user }) => {
 const styles = StyleSheet.create({
     header: {
         flexDirection: "row", 
-        justifyContent: "center", 
+        justifyContent: "flex-start", 
         alignItems: "center",
         alignSelf: "center", 
         width: "90%"
@@ -39,7 +66,7 @@ const styles = StyleSheet.create({
         aspectRatio: "228/76" 
     },
     sessionsContainer: {
-        width: "85%"
+        width: "100%"
     }
 });
 

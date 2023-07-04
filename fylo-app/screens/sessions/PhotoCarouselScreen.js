@@ -86,22 +86,28 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
             <SafeAreaProvider>
                 <SafeAreaView style={{flex: 1}}>
                     <View style={styles.header}>
-                        <Pressable onPress={handleClose}>
+                        <Pressable onPress={handleClose} style={({pressed}) => pressed && {opacity: 0.5}}>
                             <Ionicons name="chevron-down" size={30} color="black" />
                         </Pressable>
                         <View style={styles.actions}>
-                            <Pressable onPress={async () => {
-                                const index = offset.current;
-                                const photo = photos[index];
-                                await handleShare(photo.uri);
-                            }}>
+                            <Pressable 
+                                onPress={async () => {
+                                    const index = offset.current;
+                                    const photo = photos[index];
+                                    await handleShare(photo.uri);
+                                }}
+                                style={({pressed}) => pressed && {opacity: 0.5}}
+                            >
                                 <Entypo name="share" size={24} style={{marginRight: 10}} color="black" />     
                             </Pressable>
-                            <Pressable onPress={async () => {
-                                const index = offset.current;
-                                const photo = photos[index];
-                                await handleDownload(photo.uri)
-                            }}>
+                            <Pressable 
+                                onPress={async () => {
+                                    const index = offset.current;
+                                    const photo = photos[index];
+                                    await handleDownload(photo.uri)
+                                }}
+                                style={({pressed}) => pressed && {opacity: 0.5}}
+                            >
                                 <Feather name="download" size={24} color="black" />                       
                             </Pressable>
                         </View>
