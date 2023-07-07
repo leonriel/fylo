@@ -30,7 +30,7 @@ export const searchUsers = async (query) => {
 
         return res.data;
     } catch (error) {
-        console.log(error.message);
+        console.log(error.response.data);
     }
 }
 

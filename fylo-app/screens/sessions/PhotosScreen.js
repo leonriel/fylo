@@ -6,7 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
 import * as ImagePicker from 'expo-image-picker';
-import { endSession, uploadPhoto, getPendingOutgoingSessionInvites } from '../../utils/Sessions';
+import { endSession, uploadPhoto, getPendingOutgoingSessionInvites, sendSessionInvite } from '../../utils/Sessions';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SessionsContext } from '../../contexts/SessionsContext';
 import { getUsers, searchUsers } from '../../utils/Users';
@@ -21,9 +21,10 @@ import PhotoCarousel from './PhotoCarouselScreen';
 
 // TODO: Camera
 // TODO: Allow users to edit profile page 6/30
-// TODO: Should the camera really be the first screen?
-// TODO: App flow??
-// TODO: Friends?
+// TODO: Make Sessions the main page and add camera button to header?
+// TODO: Reset password
+// TODO: Select images mode
+// TODO: Friends
 // TODO: Notifications
 
 const PhotosScreen = ({ navigation, session, user }) => {
@@ -36,7 +37,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [searchedUsers, setSearchedUsers] = useState([]);
     const [activityIndicator, setActivityIndicator] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
-    const [pendingOutgingInvites, setPendingOutgoingInvites] = useState([]);
+    const [pendingOutgoingInvites, setPendingOutgoingInvites] = useState([]);
     const [collaborators, setCollaborators] = useState([]);
 
     const offset = useRef(0);
@@ -92,7 +93,9 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const loadOutgoingInvitations = async () => {
         const invitations = await getPendingOutgoingSessionInvites(session._id);
 
-        setPendingOutgoingInvites(invitations);
+        const recipients = invitations.map(invitation => invitation.recipient);
+
+        setPendingOutgoingInvites(recipients);
     }
 
     const loadCollaborators = async () => {
@@ -195,6 +198,16 @@ const PhotosScreen = ({ navigation, session, user }) => {
         ] )
     )
 
+    const handleSendSessionInvite = async (recipientId) => {
+        try {
+            await sendSessionInvite(user._id, recipientId, session._id);
+            loadOutgoingInvitations();
+        } catch (error) {
+            console.log(error);
+        }
+
+    }
+
     const blobToBase64 = (blob) => {
         const reader = new FileReader();
         reader.readAsDataURL(blob);
@@ -273,10 +286,11 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                 <Ionicons name="chevron-down-outline" size={30} color="black" />
                             </Pressable>
                         </View>
-                        <Text style={{fontSize: 30, fontFamily: "Quicksand-SemiBold", marginBottom: 10}}>{session.name}</Text>
+                        <Text style={{fontSize: 30, fontFamily: "Quicksand-SemiBold", marginBottom: 5}}>{session.name}</Text>
+                        <Text style={{fontSize: 20, fontFamily: "Quicksand-Regular", marginBottom: 10}}>{session.photos.length} Photos</Text>
                         <View style={{width: "90%"}}>
                             <Text style={{fontSize: 10, fontFamily: "Quicksand-SemiBold"}}>COLLABORATORS</Text>
-                            <View style={{marginBottom: 10}}>
+                            <View style={{marginBottom: 20}}>
                                 <FlatList
                                     data={collaborators}
                                     renderItem={({item}) => <UserListItem 
@@ -327,9 +341,9 @@ const PhotosScreen = ({ navigation, session, user }) => {
                         <View style={{width: "80%", marginTop: 10}}>
                             <Text style={{fontFamily: "Quicksand-Bold", fontSize: 10}}>INVITED</Text>
                             <FlatList 
-                                data={pendingOutgingInvites}
-                                renderItem={({ item: { recipient } }) => <UserListItem firstName={recipient.firstName} lastName={recipient.lastName} fullName={recipient.fullName} username={recipient.username} />}
-                                keyExtractor={({ recipient }) => recipient.username}
+                                data={pendingOutgoingInvites}
+                                renderItem={({ item }) => <UserListItem firstName={item.firstName} lastName={item.lastName} fullName={item.fullName} username={item.username} />}
+                                keyExtractor={(item) => item.username}
                             />
                         </View>
                         <View 
@@ -353,6 +367,43 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                     lastName={item.lastName} 
                                     fullName={item.fullName} 
                                     username={item.username}
+                                    button={() => {
+                                        if (pendingOutgoingInvites.some(invite => invite.username == item.username)) {
+                                            return <Button 
+                                            borderRadius={20}
+                                            backgroundColor="#E8763A"
+                                            height={25}
+                                            aspectRatio="3/1"
+                                            fontFamily="Quicksand-SemiBold"
+                                            fontColor="white"
+                                            fontSize={15}
+                                            text="Invited"
+                                        />
+                                        } else if (collaborators.some(collaborator => collaborator.username == item.username)) {
+                                            return <Button 
+                                            borderRadius={20}
+                                            backgroundColor="#E8763A"
+                                            height={25}
+                                            aspectRatio="3/1"
+                                            fontFamily="Quicksand-SemiBold"
+                                            fontColor="white"
+                                            fontSize={15}
+                                            text="Joined"
+                                        />
+                                        } else {
+                                            return <Button 
+                                            borderRadius={20}
+                                            backgroundColor="#E8763A"
+                                            height={25}
+                                            aspectRatio="3/1"
+                                            fontFamily="Quicksand-SemiBold"
+                                            fontColor="white"
+                                            fontSize={15}
+                                            text="Invite"
+                                            handler={() => handleSendSessionInvite(item._id)}
+                                        />
+                                        }
+                                    }}
                                 />}
                                 keyExtractor={(item) => item.username}
                                 // ItemSeparatorComponent={() => <View style={{backgroundColor: "black", height: 1, opacity: 0.5}} />}

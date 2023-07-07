@@ -82,27 +82,25 @@ const NameSessionScreen = ({ navigation, user, sessions }) => {
     }
 
     return (
-        <View style={{flex: 1}}>
-            <View style={{width: "100%", height: "50%", alignItems: "center", alignSelf: "center"}}>
-                <Text style={styles.title}>Name Your Session</Text>
-                <Input label="" width="80%" fontSize={16} placeholder={"My Session #" + (user.sessions.length + 1)} value={sessionName} handler={(text) => setSessionName(text)} secureTextEntry={false} />
-                <Button     
-                    borderRadius={20}
-                    backgroundColor="#E8763A"
-                    height={30}
-                    aspectRatio={"3/1"}
-                    fontFamily="Quicksand-SemiBold"
-                    fontSize={16}
-                    fontColor="white"
-                    text="Create"
-                    margin={24}
-                    handler={handleSessionCreation}
-                />
-                {/* <Pressable onPress={() => console.log('hello')}>
-                    <View style={{height: 50, width: 50, backgroundColor: "red"}} /> 
-                </Pressable>
-                <Button title="hello" onPress={() => console.log('hello')} /> */}
-            </View>
+        <View style={{width: "100%", height: "50%", alignItems: "center", alignSelf: "center"}}>
+            <Text style={styles.title}>Name Your Session</Text>
+            <Input label="" width="80%" fontSize={16} placeholder={"My Session #" + (user.sessions.length + 1)} value={sessionName} handler={(text) => setSessionName(text)} secureTextEntry={false} />
+            <Button     
+                borderRadius={20}
+                backgroundColor="#E8763A"
+                height={30}
+                aspectRatio={"3/1"}
+                fontFamily="Quicksand-SemiBold"
+                fontSize={16}
+                fontColor="white"
+                text="Create"
+                margin={24}
+                handler={handleSessionCreation}
+            />
+            {/* <Pressable onPress={() => console.log('hello')}>
+                <View style={{height: 50, width: 50, backgroundColor: "red"}} /> 
+            </Pressable>
+            <Button title="hello" onPress={() => console.log('hello')} /> */}
         </View>
     );
 };

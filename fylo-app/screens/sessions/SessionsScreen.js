@@ -1,14 +1,22 @@
-import { Pressable, View, SafeAreaView, StyleSheet, FlatList, Text } from 'react-native';
+import { useState } from 'react';
+import { Pressable, View, StyleSheet, FlatList, Text, Modal } from 'react-native';
 // import { Image } from 'expo-image';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import FastImage from 'react-native-fast-image';
 import SessionListItem from  '../../components/SessionListItem';
-import { AntDesign } from '@expo/vector-icons'; 
+import NameSessionScreen from '../create_session/NameSessionScreen';
+import { AntDesign, Ionicons } from '@expo/vector-icons'; 
 
 const SessionsScreen = ({ navigation, sessions, user }) => {
+    const [createSessionModalVisible, setCreateSessionModalVisible] = useState(false);
+
     return (
-        <SafeAreaView style={{flex: 1, alignItems: "center"}}>
+        <View style={{flex: 1, alignItems: "center", marginTop: 10}}>
             <View style={styles.header}>
                 <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 30}}>Sessions</Text>
+                <Pressable onPress={() => setCreateSessionModalVisible(true)} style={({pressed}) => [pressed && {opacity: 0.5}, {marginLeft: 5}]}>
+                    <AntDesign name="plus" size={24} color="black" />
+                </Pressable>
             </View>
             <View style={styles.sessionsContainer}>
                 <FlatList
@@ -49,14 +57,30 @@ const SessionsScreen = ({ navigation, sessions, user }) => {
                     contentContainerStyle={{paddingVertical: 10, height: "100%"}}
                 />
             </View>
-        </SafeAreaView>
+            <Modal
+                animationType="slide"
+                visible={createSessionModalVisible}
+                onRequestClose={() => setCreateSessionModalVisible(false)}
+            >
+                <SafeAreaProvider>
+                    <SafeAreaView style={styles.container}>
+                        <View style={styles.header}>
+                            <Pressable onPress={() => setCreateSessionModalVisible(false)} style={({ pressed }) => pressed && {opacity: 0.5}}>
+                                <Ionicons name="chevron-down" size={30} color="black" />
+                            </Pressable>
+                        </View>
+                        <NameSessionScreen navigation={navigation} user={user} />
+                    </SafeAreaView>
+                </SafeAreaProvider>
+            </Modal>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     header: {
         flexDirection: "row", 
-        justifyContent: "flex-start", 
+        justifyContent: "space-between", 
         alignItems: "center",
         alignSelf: "center", 
         width: "90%"

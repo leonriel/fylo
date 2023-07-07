@@ -60,7 +60,7 @@ const HomeScreen = ({ navigation, sessions, user }) => {
                                     </Pressable>
                                     <Text style={styles.startSessionText}>Session</Text>
                                 </View>
-                                <Modal
+                                {/* <Modal
                                     animationType="slide"
                                     visible={createSessionModalVisible}
                                     onRequestClose={() => setCreateSessionModalVisible(false)}
@@ -75,7 +75,7 @@ const HomeScreen = ({ navigation, sessions, user }) => {
                                             <NameSessionScreen navigation={navigation} user={user} />
                                         </SafeAreaView>
                                     </SafeAreaProvider>
-                                </Modal>
+                                </Modal> */}
                             </>
                         )}
                     </View>

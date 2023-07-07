@@ -4,7 +4,7 @@ import 'react-native-get-random-values'; // Required for AWS Cognito (Amplify Au
 
 import { useState, useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Alert, Dimensions, ActivityIndicator, SafeAreaView, Pressable, Text,View } from 'react-native';
+import { StyleSheet, Alert, Dimensions, ActivityIndicator, Modal, Pressable, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -12,7 +12,7 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Ionicons } from '@expo/vector-icons'; 
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Amplify, Auth, Hub } from 'aws-amplify';
@@ -27,6 +27,7 @@ import HomeScreen from './screens/HomeScreen';
 import SessionsNavigator from './screens/sessions/SessionsNavigator';
 import PlaygroundScreen from './screens/PlaygroundScreen';
 import ProfileIcon from './components/ProfileIcon';
+import CameraComponent from './components/CameraComponent';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
@@ -61,6 +62,7 @@ export default function App() {
   const [sessions, setSessions] = useState([]); 
   const [user, setUser] = useState(null);
   const [appIsReady, setAppIsReady] = useState(false);
+  const [cameraModalVisible, setCameraModalVisible] = useState(false);
 
   useEffect(() => {
     const prepare = async () => {
@@ -102,7 +104,7 @@ export default function App() {
     () => ({
       signIn: async (username, password) => {
         if (!username || !password) {
-          return Alert.alert('Invalid username or password combination.');
+          return Alert.alert('Invalid username and password combination.');
         }
 
         try {
@@ -111,6 +113,7 @@ export default function App() {
           loadData(user.attributes.preferred_username);
         } catch (error) {
           console.log(error);
+          Alert.alert('Invalid username and password combination.');
         } 
       },
       autoSignIn: async (username) => {
@@ -197,81 +200,89 @@ export default function App() {
               {isSignedIn ? (
                 user ? (
                 <SessionsContext.Provider value={sessionsContext}>
-                    <SafeAreaView>
+                    <SafeAreaView style={{flex: 1}} edges={['top', 'right', 'left']}>
                       <View style={styles.header}>
+                        <Ionicons name="settings-outline" size={30} color="black" />                        
                         <FastImage style={styles.logo} source={require('./assets/logo-black.png')} />
+                        <Pressable onPress={() => setCameraModalVisible(true)} style={({pressed}) => pressed && {opacity: 0.5}}>
+                          <Ionicons name="camera-outline" size={30} color="black" />
+                        </Pressable>
                       </View>
-                    </SafeAreaView>
-                    <Tab.Navigator 
-                      initialRouteName='Home' 
-                      tabBarPosition='bottom' 
-                      initialLayout={{width: Dimensions.get('window').width}} 
-                      // tabBar={({navigation}) => {
-                      //   return (<SafeAreaView>
-                      //     <View style={styles.header}>
-                      //       {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Playground")}>
-                      //         <ProfileIcon firstName={user.firstName} lastName={user.lastName} />
-                      //       </Pressable>} */}
-                      //       <FastImage style={styles.logo} source={require('./assets/logo-black.png')} />
-                      //       {/* {navigation.getState().index == 1 && <Pressable onPress={() => navigation.jumpTo("Sessions Navigator")}>
-                      //         <Ionicons name="albums-outline" size={30} color="black" />                        
-                      //       </Pressable>} */}
-                      //     </View>
-                      // </SafeAreaView>)}}
-                      screenOptions={{
-                        tabBarStyle: {
-                          height: "8%",
-                          backgroundColor: "powderblue",
-                          borderRadius: 20,
-                          shadowOffset: { width: 0, height: -3},
-                          shadowOpacity: 0.2,
-                          shadowRadius: 5
-                        },
-                        tabBarIndicator: () => {
-                          return null
-                        },
-                        animationEnabled: false
-                          // swipeEnabled: false
-                      }}
-                      >
-                      {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
-                      <Tab.Screen 
-                          name="Playground"
-                          children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
-                          options={{
-                            tabBarShowLabel: false,
-                            tabBarIcon: ({focused, color}) => {
-                              return (
-                                focused ? <Ionicons name="person" size={24} color="black" /> : <Ionicons name="person-outline" size={24} color="black" />
-                              )
-                            }
-                          }}
-                      />
-                      <Tab.Screen 
-                          name="Home" 
-                          children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
-                          options={{
-                            tabBarShowLabel: false,
-                            tabBarIcon: ({focused, color}) => {
-                              return (
-                                focused ? <Ionicons name="home" size={24} color="black" /> : <Ionicons name="home-outline" size={24} color="black" />
-                              )
-                            }
-                          }}
-                      />
-                      <Tab.Screen 
-                          name="Sessions Navigator" 
-                          children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
-                          options={{
-                            tabBarShowLabel: false,
-                            tabBarIcon: ({focused, color}) => {
-                              return (
-                                focused ? <Ionicons name="albums" size={24} color="black" /> : <Ionicons name="albums-outline" size={24} color="black" />
-                              )
-                            }
-                          }}
-                      />
-                  </Tab.Navigator>
+                      <Tab.Navigator 
+                        initialRouteName='Sessions Navigator' 
+                        tabBarPosition='bottom' 
+                        initialLayout={{width: Dimensions.get('window').width}} 
+                        screenOptions={{
+                          tabBarStyle: {
+                            height: "8%",
+                            backgroundColor: "powderblue",
+                            borderRadius: 20,
+                            shadowOffset: { width: 0, height: -3},
+                            shadowOpacity: 0.2,
+                            shadowRadius: 5
+                          },
+                          tabBarIndicator: () => {
+                            return null
+                          },
+                          animationEnabled: false
+                            // swipeEnabled: false
+                        }}
+                        >
+                        {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
+                        <Tab.Screen 
+                            name="Playground"
+                            children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
+                            options={{
+                              tabBarShowLabel: false,
+                              tabBarIcon: ({focused, color}) => {
+                                return (
+                                  focused ? <Ionicons name="person" size={24} color="black" /> : <Ionicons name="person-outline" size={24} color="black" />
+                                )
+                              }
+                            }}
+                        />
+                        {/* <Tab.Screen 
+                            name="Home" 
+                            children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
+                            options={{
+                              tabBarShowLabel: false,
+                              tabBarIcon: ({focused, color}) => {
+                                return (
+                                  focused ? <Ionicons name="home" size={24} color="black" /> : <Ionicons name="home-outline" size={24} color="black" />
+                                )
+                              }
+                            }}
+                        /> */}
+                        <Tab.Screen 
+                            name="Sessions Navigator" 
+                            children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
+                            options={{
+                              tabBarShowLabel: false,
+                              tabBarIcon: ({focused, color}) => {
+                                return (
+                                  focused ? <Ionicons name="albums" size={24} color="black" /> : <Ionicons name="albums-outline" size={24} color="black" />
+                                )
+                              }
+                            }}
+                        />
+                    </Tab.Navigator>
+                    <Modal 
+                      visible={cameraModalVisible}
+                      animationType="slide"
+                      onDismiss={() => setCameraModalVisible(false)}
+                    >
+                      <SafeAreaProvider>
+                        <SafeAreaView>
+                            <View style={styles.header}>
+                              <Pressable onPress={() => setCameraModalVisible(false)} style={({pressed}) => pressed && {opacity: 0.5}}>
+                                <Ionicons name="chevron-down" size={30} color="black" />
+                              </Pressable>
+                            </View>
+                            <CameraComponent />
+                        </SafeAreaView>
+                      </SafeAreaProvider>
+                    </Modal>
+                  </SafeAreaView>
                 </SessionsContext.Provider>
                 ) : (
                   <ActivityIndicator />
