@@ -27,7 +27,7 @@ import HomeScreen from './screens/HomeScreen';
 import SessionsNavigator from './screens/sessions/SessionsNavigator';
 import PlaygroundScreen from './screens/PlaygroundScreen';
 import ProfileIcon from './components/ProfileIcon';
-import CameraComponent from './components/CameraComponent';
+import CameraScreen from './screens/CameraScreen';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
@@ -214,7 +214,7 @@ export default function App() {
                         initialLayout={{width: Dimensions.get('window').width}} 
                         screenOptions={{
                           tabBarStyle: {
-                            height: "8%",
+                            height: "10%",
                             backgroundColor: "powderblue",
                             borderRadius: 20,
                             shadowOffset: { width: 0, height: -3},
@@ -271,19 +271,16 @@ export default function App() {
                       animationType="slide"
                       onDismiss={() => setCameraModalVisible(false)}
                     >
-                      <SafeAreaProvider>
-                        <SafeAreaView>
-                            <View style={styles.header}>
-                              <Pressable onPress={() => setCameraModalVisible(false)} style={({pressed}) => pressed && {opacity: 0.5}}>
-                                <Ionicons name="chevron-down" size={30} color="black" />
-                              </Pressable>
-                            </View>
-                            <CameraComponent />
-                        </SafeAreaView>
-                      </SafeAreaProvider>
+                      <View style={{flex: 1, backgroundColor: "black"}}>
+                        <SafeAreaProvider>
+                          <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
+                              <CameraScreen user={user} sessions={sessions} handleClose={() => setCameraModalVisible(false)} />
+                          </SafeAreaView>
+                        </SafeAreaProvider>
+                      </View>
                     </Modal>
-                  </SafeAreaView>
-                </SessionsContext.Provider>
+                    </SafeAreaView>
+                  </SessionsContext.Provider>
                 ) : (
                   <ActivityIndicator />
                 )

@@ -19,13 +19,12 @@ import { CLOUDFRONT_DOMAIN } from '@env';
 import { MaterialCommunityIcons, Ionicons, AntDesign } from '@expo/vector-icons';
 import PhotoCarousel from './PhotoCarouselScreen';
 
-// TODO: Camera
-// TODO: Allow users to edit profile page 6/30
-// TODO: Make Sessions the main page and add camera button to header?
-// TODO: Reset password
-// TODO: Select images mode
-// TODO: Friends
-// TODO: Notifications
+// TODO: Display video thumbnail? Find a way to keep track of file type... and maybe video length? Probably through MongoDB... will also need to kepe track of file types from local library 2
+// TODO: Allow users to edit profile page 6/30 3
+// TODO: Reset password 4
+// TODO: Select images mode 5
+// TODO: Friends 1
+// TODO: Notifications 6
 
 const PhotosScreen = ({ navigation, session, user }) => {
     const { refreshUser } = useContext(AuthContext);
@@ -130,44 +129,6 @@ const PhotosScreen = ({ navigation, session, user }) => {
                 console.error(error);
             } finally {
                 setActivityIndicator(false);
-            }
-        }
-    }
-
-    const handlePictureTake = async () => {
-        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-
-        if (!permissionResult.granted) {
-            return Alert.alert("Unable to take a picture. Please check your permissions.");
-        }
-
-        let result = await ImagePicker.launchCameraAsync();
-
-        if (!result.canceled) {
-            try {
-                const resp = await fetch(result.assets[0].uri);
-                const blob = await resp.blob();
-                const fileName = Date.now() + uuidv4();
-                const { key } = Storage.put(`${session._id}/${fileName}`, blob, {
-                    contentType: "image/jpeg",
-                    resumable: true,
-                    completeCallback: async (event) => {
-                        const uri = await blobToBase64(blob);
-                        setPhotos((currentPhotos) => {
-                            return ([
-                                ...currentPhotos,
-                                {
-                                    id: currentPhotos.length,
-                                    uri: uri
-                                }
-                            ])
-                        })
-                        Alert.alert("Photo uploaded!");
-                    }
-                });
-
-            } catch (error) {
-                console.error(error);
             }
         }
     }
@@ -338,7 +299,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                         </View>
                         <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 24}}>Invite Collaborators</Text>
                         <Input label="Search" width="80%" placeholder="Search for collaborators" handler={(text) => handleSearchUsers(text)} />
-                        <View style={{width: "80%", marginTop: 10}}>
+                        <View style={{width: "80%", marginTop: 10, height: "100%"}}>
                             <Text style={{fontFamily: "Quicksand-Bold", fontSize: 10}}>INVITED</Text>
                             <FlatList 
                                 data={pendingOutgoingInvites}
@@ -406,10 +367,6 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                     }}
                                 />}
                                 keyExtractor={(item) => item.username}
-                                // ItemSeparatorComponent={() => <View style={{backgroundColor: "black", height: 1, opacity: 0.5}} />}
-                                contentContainerStyle={{
-                                    
-                                }}
                             />
                         </View>
                     </SafeAreaView>

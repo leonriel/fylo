@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { Button, Modal, TextInput, Text, View, Dimensions, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import CameraComponent from '../components/CameraComponent';
+import CameraComponent from './CameraScreen';
 import { AuthContext } from '../contexts/AuthContext';
 import { SessionsContext } from '../contexts/SessionsContext';
 import { createSession } from '../utils/Sessions';

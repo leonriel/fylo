@@ -25,7 +25,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Fylo to access your camera."
+          "cameraPermission": "Allow Fylo to access your camera.",
+          "microphonePermission": "Allow Fylo to use your microphone."
         }
       ],
       [
