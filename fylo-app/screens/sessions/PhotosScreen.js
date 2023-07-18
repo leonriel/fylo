@@ -123,7 +123,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                 const photo = result.assets[0];
                 let contentType;
                 if (photo.type == "image" || photo.type == "video") {
-                    contentType = photo;
+                    contentType = photo.type;
                 } else {
                     return Alert.alert("Please choose an image or video.");
                 }
@@ -131,7 +131,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                 const blob = await resp.blob();
                 setInfoModalVisible(false);
                 setActivityIndicator(true);
-                await uploadPhoto(session, blob, user).then(async (resp) => {
+                await uploadPhoto(session, blob, user, contentType).then(async (resp) => {
                     const uri = await blobToBase64(blob);
                     setPhotos((currentPhotos) => [{
                         id: currentPhotos.length + 1,

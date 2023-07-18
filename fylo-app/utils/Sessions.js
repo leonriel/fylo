@@ -125,7 +125,7 @@ export const uploadPhoto = async (session, imgBlob, owner, type) => {
         const fileName = Date.now() + uuidv4();
 
         const { key } = await Storage.put(`${session._id}/${fileName}`, imgBlob, {
-            // contentType: "image/jpeg",
+            contentType: type == "image" ? "image/jpeg" : "video/quicktime",
             useAccelerateEndpoint: true
         });
 
