@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Modal, FlatList, View, Dimensions, Pressable, Alert, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import { Video, ResizeMode } from 'expo-av';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -58,12 +59,15 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
         }
     }
 
-    const CarouselPhoto = ({uri}) => {
+    const CarouselPhoto = ({uri, type}) => {
         const [width, setWidth] = useState(null);
         const [height, setHeight] = useState(null);
+        const [videoStatus, setVideoStatus] = useState(null);
+        const video = useRef(null);
 
         return (
             <View style={styles.mediaContainer}>
+                {type == "image" && 
                 <FastImage 
                     resizeMode={FastImage.resizeMode.contain} 
                     style={{width: "100%", aspectRatio: height && width ? `${width}/${height}` : 'auto'}} 
@@ -72,7 +76,18 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                         setWidth(e.nativeEvent.width);
                         setHeight(e.nativeEvent.height);
                     }}
+                />}
+                {type == "video" &&
+                <Video
+                    ref={video}
+                    style={{width: "100%", aspectRatio: height && width ? `${width}/${height}` : 'auto'}} 
+                    source={{uri: uri}}
+                    useNativeControls
+                    shouldPlay
+                    resizeMode={ResizeMode.CONTAIN}
+                    onPlaybackStatusUpdate={(status) => setVideoStatus(() => status)}
                 />
+                }
             </View>
         )
     }
@@ -117,7 +132,7 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                         data={photos}
                         renderItem={({item}) => {
                             return (
-                                <CarouselPhoto uri={item.uri} />
+                                <CarouselPhoto uri={item.uri} type={item.type} />
                             )
                         }}
                         ItemSeparatorComponent={() => <View style={{width: 20}} />}

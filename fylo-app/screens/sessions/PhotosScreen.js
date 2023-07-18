@@ -1,12 +1,12 @@
 import { useEffect, useState, useContext, useRef } from 'react';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
-import { FlatList, View, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions } from 'react-native';
+import { FlatList, View, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions, TextInput } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
 import * as ImagePicker from 'expo-image-picker';
-import { endSession, uploadPhoto, getPendingOutgoingSessionInvites, sendSessionInvite } from '../../utils/Sessions';
+import { endSession, uploadPhoto, getPendingOutgoingSessionInvites, sendSessionInvite, cancelSessionInvite } from '../../utils/Sessions';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SessionsContext } from '../../contexts/SessionsContext';
 import { getUsers, searchUsers } from '../../utils/Users';
@@ -16,15 +16,14 @@ import Button from '../../components/Button';
 import { Storage } from 'aws-amplify';
 import { v4 as uuidv4 } from 'uuid';
 import { CLOUDFRONT_DOMAIN } from '@env';
-import { MaterialCommunityIcons, Ionicons, AntDesign } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons, AntDesign, Entypo} from '@expo/vector-icons';
 import PhotoCarousel from './PhotoCarouselScreen';
 
-// TODO: Display video thumbnail? Find a way to keep track of file type... and maybe video length? Probably through MongoDB... will also need to kepe track of file types from local library 2
-// TODO: Allow users to edit profile page 6/30 3
-// TODO: Reset password 4
-// TODO: Select images mode 5
-// TODO: Friends 1
-// TODO: Notifications 6
+// TODO: Display video thumbnail? Find a way to keep track of file type... and maybe video length? Probably through MongoDB... will also need to kepe track of file types from local library 1
+// TODO: Allow users to edit profile page 6/30 2
+// TODO: Reset password 3
+// TODO: Select images mode 4
+// TODO: Notifications 5
 
 const PhotosScreen = ({ navigation, session, user }) => {
     const { refreshUser } = useContext(AuthContext);
@@ -38,7 +37,9 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [pendingOutgoingInvites, setPendingOutgoingInvites] = useState([]);
     const [collaborators, setCollaborators] = useState([]);
+    const [friends, setFriends] = useState([]);
 
+    const searchBar = useRef(null);
     const offset = useRef(0);
 
     useEffect(() => {
@@ -73,6 +74,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
         loadPhotos();
         loadOutgoingInvitations();
         loadCollaborators();
+        loadFriends();
     }, []);
 
     const loadPhotos = async () => {
@@ -82,7 +84,8 @@ const PhotosScreen = ({ navigation, session, user }) => {
             const url = `${CLOUDFRONT_DOMAIN}/public/${photo.key}`
             return ({
                 id: numPhotos - index,
-                uri: url
+                uri: url,
+                type: photo.type
             })
         });
 
@@ -103,15 +106,28 @@ const PhotosScreen = ({ navigation, session, user }) => {
         setCollaborators(members);
     }
 
+    const loadFriends = async () => {
+        const friends = await getUsers(user.friends);
+
+        setFriends(friends);
+    }
+
     const handlePhotoUpload = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
+        const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.All,
             quality: 1
         });
           
         if (!result.canceled) {
             try {
-                const resp = await fetch(result.assets[0].uri);
+                const photo = result.assets[0];
+                let contentType;
+                if (photo.type == "image" || photo.type == "video") {
+                    contentType = photo;
+                } else {
+                    return Alert.alert("Please choose an image or video.");
+                }
+                const resp = await fetch(photo.uri);
                 const blob = await resp.blob();
                 setInfoModalVisible(false);
                 setActivityIndicator(true);
@@ -167,6 +183,15 @@ const PhotosScreen = ({ navigation, session, user }) => {
             console.log(error);
         }
 
+    }
+
+    const handleCancelInvite = async (recipientId) => {
+        try {
+            await cancelSessionInvite(user._id, recipientId, session._id);
+            loadOutgoingInvitations();
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     const blobToBase64 = (blob) => {
@@ -250,7 +275,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                         <Text style={{fontSize: 30, fontFamily: "Quicksand-SemiBold", marginBottom: 5}}>{session.name}</Text>
                         <Text style={{fontSize: 20, fontFamily: "Quicksand-Regular", marginBottom: 10}}>{session.photos.length} Photos</Text>
                         <View style={{width: "90%"}}>
-                            <Text style={{fontSize: 10, fontFamily: "Quicksand-SemiBold"}}>COLLABORATORS</Text>
+                            <Text style={{fontSize: 12, fontFamily: "Quicksand-SemiBold"}}>COLLABORATORS</Text>
                             <View style={{marginBottom: 20}}>
                                 <FlatList
                                     data={collaborators}
@@ -259,7 +284,10 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                         lastName={item.lastName} 
                                         fullName={item.fullName} 
                                         username={item.username} 
-                                        button={session.owner == item._id ? <Text style={{fontSize: 10, fontFamily: "Quicksand-Regular", color: "gray"}}>Owner</Text> : null}
+                                        button={
+                                            session.owner == item._id ? (
+                                                <Text style={{fontSize: 10, fontFamily: "Quicksand-Regular", color: "gray"}}>Owner</Text>
+                                            ) : null}
                                     />}
                                     keyExtractor={(item) => item.username}
                                     scrollEnabled={false}
@@ -297,27 +325,58 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                 <Ionicons name="chevron-down-outline" size={30} color="black" />
                             </Pressable>
                         </View>
-                        <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 24}}>Invite Collaborators</Text>
-                        <Input label="Search" width="80%" placeholder="Search for collaborators" handler={(text) => handleSearchUsers(text)} />
-                        <View style={{width: "80%", marginTop: 10, height: "100%"}}>
-                            <Text style={{fontFamily: "Quicksand-Bold", fontSize: 10}}>INVITED</Text>
+                        <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 24, marginBottom: 20}}>Invite Collaborators</Text>
+                        <View style={styles.searchBarContainer}>
+                            <Entypo name="magnifying-glass" size={24} color="black" />
+                            <TextInput 
+                                ref={input => {searchBar.current = input}}
+                                style={styles.searchBar} 
+                                placeholder="Search for collaborators"
+                                onChangeText={(text) => handleSearchUsers(text)}
+                            />
+                        </View>
+                        {/* <Input label="Search" width="90%" placeholder="Search for collaborators" handler={(text) => handleSearchUsers(text)} /> */}
+                        <View style={{width: "90%", marginTop: 20}}>
+                            <Text style={{fontFamily: "Quicksand-Bold", fontSize: 12}}>INVITED</Text>
                             <FlatList 
                                 data={pendingOutgoingInvites}
+                                renderItem={({ item }) => (
+                                    <UserListItem 
+                                        firstName={item.firstName} 
+                                        lastName={item.lastName} 
+                                        fullName={item.fullName} 
+                                        username={item.username} 
+                                        button={
+                                            <Pressable onPress={() => handleCancelInvite(item._id)}>
+                                                <Entypo name="cross" size={16} color="gray" />
+                                            </Pressable>
+                                        }
+                                    />
+                                )}
+                                keyExtractor={(item) => item.username}
+                                scrollEnabled={false}
+                            />
+                        </View>
+                        <View style={{width: "90%", marginTop: 20}}>
+                            <Text style={{fontFamily: "Quicksand-Bold", fontSize: 12}}>FRIENDS</Text>
+                            <FlatList 
+                                data={friends}
                                 renderItem={({ item }) => <UserListItem firstName={item.firstName} lastName={item.lastName} fullName={item.fullName} username={item.username} />}
                                 keyExtractor={(item) => item.username}
+                                scrollEnabled={false}
                             />
                         </View>
                         <View 
                             style={{
                                 backgroundColor: "white", 
-                                width: "80%", 
+                                width: "90%", 
                                 alignSelf: "center", 
                                 shadowOffset: { width: 0, height: 5 }, 
                                 shadowOpacity: 0.5,
                                 shadowRadius: 5,
                                 borderRadius: 10,
                                 position: 'absolute', 
-                                top: "25%",
+                                top: "26%",
                                 paddingHorizontal: 10
                             }}
                         >
@@ -331,38 +390,38 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                     button={() => {
                                         if (pendingOutgoingInvites.some(invite => invite.username == item.username)) {
                                             return <Button 
-                                            borderRadius={20}
-                                            backgroundColor="#E8763A"
-                                            height={25}
-                                            aspectRatio="3/1"
-                                            fontFamily="Quicksand-SemiBold"
-                                            fontColor="white"
-                                            fontSize={15}
-                                            text="Invited"
+                                                borderRadius={20}
+                                                backgroundColor="#E8763A"
+                                                height={25}
+                                                aspectRatio="3/1"
+                                                fontFamily="Quicksand-SemiBold"
+                                                fontColor="white"
+                                                fontSize={15}
+                                                text="Invited"
                                         />
                                         } else if (collaborators.some(collaborator => collaborator.username == item.username)) {
                                             return <Button 
-                                            borderRadius={20}
-                                            backgroundColor="#E8763A"
-                                            height={25}
-                                            aspectRatio="3/1"
-                                            fontFamily="Quicksand-SemiBold"
-                                            fontColor="white"
-                                            fontSize={15}
-                                            text="Joined"
-                                        />
+                                                borderRadius={20}
+                                                backgroundColor="#E8763A"
+                                                height={25}
+                                                aspectRatio="3/1"
+                                                fontFamily="Quicksand-SemiBold"
+                                                fontColor="white"
+                                                fontSize={15}
+                                                text="Joined"
+                                            />
                                         } else {
                                             return <Button 
-                                            borderRadius={20}
-                                            backgroundColor="#E8763A"
-                                            height={25}
-                                            aspectRatio="3/1"
-                                            fontFamily="Quicksand-SemiBold"
-                                            fontColor="white"
-                                            fontSize={15}
-                                            text="Invite"
-                                            handler={() => handleSendSessionInvite(item._id)}
-                                        />
+                                                borderRadius={20}
+                                                backgroundColor="#E8763A"
+                                                height={25}
+                                                aspectRatio="3/1"
+                                                fontFamily="Quicksand-SemiBold"
+                                                fontColor="white"
+                                                fontSize={15}
+                                                text="Invite"
+                                                handler={() => handleSendSessionInvite(item._id)}
+                                            />
                                         }
                                     }}
                                 />}
@@ -389,12 +448,25 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         marginVertical: 10
     },
-    input: {
-        width: '80%',
-        borderWidth: 1,
-        margin: 8,
-        padding: 8,
-        fontSize: 16
+    searchBarContainer: {
+        flexDirection: "row",
+        justifyContent: "flex-start",
+        alignItems:"center",
+        alignSelf: "center",
+        width: "90%",
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        borderRadius: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        height: 40,
+        overflow: "hidden",
+    },
+    searchBar: {
+        width: "90%", 
+        height: "100%", 
+        fontSize: 20, 
+        fontFamily: "Quicksand-Regular", 
+        paddingHorizontal: 5
     },
     text: {
         fontSize: 20

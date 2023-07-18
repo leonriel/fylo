@@ -32,6 +32,14 @@ export const endSession = async (userId, session) => {
     } 
 }
 
+export const removeCollaborator = async (userId, session, collaboratorId) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}
+
 export const sendSessionInvite = async (senderId, recipientId, session) => {
     try {
         const resp = await axios.post("https://fylo-app-server.herokuapp.com/sessionInvite/create", {
@@ -70,6 +78,20 @@ export const ignoreSessionInvite = async (senderId, recipientId, session) => {
     }
 }
 
+export const cancelSessionInvite = async (senderId, recipientId, session) => {
+    try {
+        const resp = await axios.post("https://fylo-app-server.herokuapp.com/sessionInvite/delete", {
+            sender: senderId,
+            recipient: recipientId,
+            session: session
+        });
+
+        return resp.data;
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
 export const getPendingIncomingSessionInvites = async (recipientId) => {
     try {
         const resp = await axios.post("https://fylo-app-server.herokuapp.com/sessionInvite/getPendingIncoming", {
@@ -94,7 +116,7 @@ export const getPendingOutgoingSessionInvites = async (sessionId) => {
     }
 }
 
-export const uploadPhoto = async (session, imgBlob, owner) => {
+export const uploadPhoto = async (session, imgBlob, owner, type) => {
     try {
         if (!session.contributors.includes(owner._id)) {
             throw new Error("User does not have permission to add to this session.");
@@ -111,7 +133,8 @@ export const uploadPhoto = async (session, imgBlob, owner) => {
             await axios.post("https://fylo-app-server.herokuapp.com/session/addPhoto", {
                 session: session._id,
                 key: key,
-                owner: owner._id
+                owner: owner._id,
+                type: type
             })
         } catch (error) {
             throw error.message;

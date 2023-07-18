@@ -9,7 +9,7 @@ import ProfileIcon from './ProfileIcon';
 // button: Component
 // handler: Callback
 
-const UserListItem = ({firstName, lastName, fullName, username, button, handler}) => {
+const UserListItem = ({firstName, lastName, fullName, username, button}) => {
     return (
         <View style={styles.user}>
             <View style={styles.nameContainer}>
@@ -23,7 +23,7 @@ const UserListItem = ({firstName, lastName, fullName, username, button, handler}
                     </Text>
                 </View>
             </View>
-            <Pressable style={{justifyContent: "center"}} onPress={handler}>
+            <Pressable style={{justifyContent: "center", alignItems: "center", flexDirection: "row"}}>
                 {button}
             </Pressable>
         </View>

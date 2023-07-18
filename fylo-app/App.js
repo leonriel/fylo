@@ -28,6 +28,7 @@ import SessionsNavigator from './screens/sessions/SessionsNavigator';
 import PlaygroundScreen from './screens/PlaygroundScreen';
 import ProfileIcon from './components/ProfileIcon';
 import CameraScreen from './screens/CameraScreen';
+import FriendsScreen from './screens/FriendsScreen';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
@@ -134,6 +135,7 @@ export default function App() {
       signOut: async () => {
         try {
           await Auth.signOut();
+          setUser(null);
           setIsSignedIn(false);
         } catch (error) {
           console.log(error);
@@ -228,18 +230,17 @@ export default function App() {
                             // swipeEnabled: false
                         }}
                         >
-                        {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
                         <Tab.Screen 
-                            name="Playground"
-                            children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
-                            options={{
-                              tabBarShowLabel: false,
-                              tabBarIcon: ({focused, color}) => {
-                                return (
-                                  focused ? <Ionicons name="person" size={24} color="black" /> : <Ionicons name="person-outline" size={24} color="black" />
-                                )
-                              }
-                            }}
+                          name="Friends" 
+                          children={(props) => <FriendsScreen {...props} user={user} />} 
+                          options={{
+                            tabBarShowLabel: false,
+                            tabBarIcon: ({focused, color}) => {
+                              return (
+                                focused ? <Ionicons name="people" size={24} color="black" /> : <Ionicons name="people-outline" size={24} color="black" />
+                              )
+                            }
+                          }}
                         />
                         {/* <Tab.Screen 
                             name="Home" 
@@ -261,6 +262,18 @@ export default function App() {
                               tabBarIcon: ({focused, color}) => {
                                 return (
                                   focused ? <Ionicons name="albums" size={24} color="black" /> : <Ionicons name="albums-outline" size={24} color="black" />
+                                )
+                              }
+                            }}
+                        />
+                        <Tab.Screen 
+                            name="Playground"
+                            children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
+                            options={{
+                              tabBarShowLabel: false,
+                              tabBarIcon: ({focused, color}) => {
+                                return (
+                                  focused ? <Ionicons name="person" size={24} color="black" /> : <Ionicons name="person-outline" size={24} color="black" />
                                 )
                               }
                             }}

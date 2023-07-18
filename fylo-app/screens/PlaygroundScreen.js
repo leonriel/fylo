@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     },
     infoContainer: {
         flex: 1,
-        width: "85%",
+        width: "80%",
         flexDirection: "row",
         // justifyContent: "space-between",
         alignItems: "center",
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
         fontSize: 36
     },
     nameContainer: {
-        marginLeft: 50,
+        marginLeft: 60,
         alignItems: "flex-start",
         justifyContent: "space-between"
     },
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     sessionInvitesContainer: {
         flex: 4,
         alignItems: "center",
-        width: "85%",
+        width: "90%",
         alignSelf: "center"
     },
 })

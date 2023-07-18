@@ -111,8 +111,8 @@ const CameraScreen = ({ user, sessions, handleClose }) => {
 
             const resp = await fetch(image);
             const blob = await resp.blob();
-            // const contentType = videoMode ? 'video' : 'photo'
-            await uploadPhoto(activeSession, blob, user).then(async (resp) => {
+            const contentType = videoMode ? 'video' : 'image'
+            await uploadPhoto(activeSession, blob, user, contentType).then(async (resp) => {
                 reloadSessions(user.sessions);
             });
 
