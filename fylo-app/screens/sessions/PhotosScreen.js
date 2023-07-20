@@ -6,6 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
 import * as ImagePicker from 'expo-image-picker';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import { endSession, uploadPhoto, getPendingOutgoingSessionInvites, sendSessionInvite, cancelSessionInvite } from '../../utils/Sessions';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SessionsContext } from '../../contexts/SessionsContext';
@@ -81,7 +82,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
         const numPhotos = session.photos.length;
 
         const imgComponents = session.photos.map((photo, index) => {
-            const url = `${CLOUDFRONT_DOMAIN}/public/${photo.key}`
+            const url = `${CLOUDFRONT_DOMAIN}/public/${photo.key}`;
             return ({
                 id: numPhotos - index,
                 uri: url,
@@ -209,7 +210,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
         setModalVisible(true);
     }
 
-    const Photo = ({ uri, id, index }) => {
+    const Photo = ({ uri, id, index, type }) => {
         let gap;
         const numPhotos = photos.length;
         if (numPhotos % 4 == 0 && id % 4 != 0) {
@@ -244,7 +245,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                         <FlatList 
                             data={photos}
                             renderItem={({item, index}) => {
-                                return <Photo uri={item.uri} id={item.id} index={index} />
+                                return <Photo uri={item.uri} id={item.id} index={index} type={item.type} />
                             }}
                             keyExtractor={(item) => item.id}
                             numColumns={4}

@@ -83,9 +83,12 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                     style={{width: "100%", aspectRatio: height && width ? `${width}/${height}` : 'auto'}} 
                     source={{uri: uri}}
                     useNativeControls
-                    shouldPlay
                     resizeMode={ResizeMode.CONTAIN}
                     onPlaybackStatusUpdate={(status) => setVideoStatus(() => status)}
+                    onReadyForDisplay={({naturalSize}) => {
+                        setWidth(naturalSize.width);
+                        setHeight(naturalSize.height);
+                    }}
                 />
                 }
             </View>
