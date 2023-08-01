@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Camera, CameraType } from 'expo-camera';
 import { Video, ResizeMode } from 'expo-av';
 // import VideoPlayer from 'expo-video-player';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import { useState, useEffect, useRef, useContext } from 'react';
 import { StyleSheet, Text, Pressable, View, Alert, ImageBackground } from 'react-native';
 import { Entypo, Ionicons } from '@expo/vector-icons';
@@ -112,7 +113,13 @@ const CameraScreen = ({ user, sessions, handleClose }) => {
             const resp = await fetch(image);
             const blob = await resp.blob();
             const contentType = videoMode ? 'video' : 'image'
-            await uploadPhoto(activeSession, blob, user, contentType).then(async (resp) => {
+            let thumbnail;
+            if (contentType == "video") {
+                thumbnail = await VideoThumbnails.getThumbnailAsync(image);
+                thumbnail = await fetch(thumbnail);
+                thumbnail = await thumbnail.blob();
+            }
+            await uploadPhoto(activeSession, blob, user, contentType, thumbnail).then(async (resp) => {
                 reloadSessions(user.sessions);
             });
 

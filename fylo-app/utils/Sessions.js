@@ -1,7 +1,8 @@
 import axios from 'axios';
-import { Alert } from 'react-native';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import { Storage } from 'aws-amplify';
 import { v4 as uuidv4 } from 'uuid';
+import { Video } from 'expo-av';
 
 // Use MongoDB transactions instead
 
@@ -117,7 +118,7 @@ export const getPendingOutgoingSessionInvites = async (sessionId) => {
     }
 }
 
-export const uploadPhoto = async (session, imgBlob, owner, type) => {
+export const uploadPhoto = async (session, imgBlob, owner, type, thumbnail = undefined) => {
     try {
         if (!session.contributors.includes(owner._id)) {
             throw new Error("User does not have permission to add to this session.");
@@ -130,12 +131,22 @@ export const uploadPhoto = async (session, imgBlob, owner, type) => {
             useAccelerateEndpoint: true
         });
 
+        if (thumbnail) {
+            const thumbnailFileName = Date.now() + uuidv4();
+            const { thumbnailKey } = await Storage.put(`${session._id}/${thumbnailFileName}`, thumbnail, {
+                contentType: "image/jpeg",
+                useAccelerateEndpoint: true
+            })
+            thumbnail = thumbnailKey;
+        }
+
         try {
             await axios.post("https://fylo-app-server.herokuapp.com/session/addPhoto", {
                 session: session._id,
                 key: key,
                 owner: owner._id,
-                type: type
+                type: type,
+                thumbnail: thumbnail
             })
         } catch (error) {
             throw error.message;

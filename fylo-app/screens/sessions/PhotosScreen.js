@@ -7,6 +7,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import FastImage from 'react-native-fast-image';
 import * as ImagePicker from 'expo-image-picker';
 import * as VideoThumbnails from 'expo-video-thumbnails';
+import { Video, ResizeMode } from 'expo-av';
 import { endSession, uploadPhoto, getPendingOutgoingSessionInvites, sendSessionInvite, cancelSessionInvite } from '../../utils/Sessions';
 import { AuthContext } from '../../contexts/AuthContext';
 import { SessionsContext } from '../../contexts/SessionsContext';
@@ -132,7 +133,13 @@ const PhotosScreen = ({ navigation, session, user }) => {
                 const blob = await resp.blob();
                 setInfoModalVisible(false);
                 setActivityIndicator(true);
-                await uploadPhoto(session, blob, user, contentType).then(async (resp) => {
+                let thumbnail;
+                if (contentType == "video") {
+                    thumbnail = await VideoThumbnails.getThumbnailAsync(photo.uri);
+                    thumbnail = await fetch(thumbnail);
+                    thumbnail = await thumbnail.blob();
+                }
+                await uploadPhoto(session, blob, user, contentType, thumbnail).then(async (resp) => {
                     const uri = await blobToBase64(blob);
                     setPhotos((currentPhotos) => [{
                         id: currentPhotos.length + 1,
@@ -231,7 +238,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
 
         return (
             <Pressable onPress={() => handleOpenCarousel(index)} style={{flex: 1, aspectRatio: 1, minWidth: Dimensions.get('window').width / 4, maxWidth: Dimensions.get('window').width / 4, ...gap}}>
-                <FastImage style={{height: "100%", width: "100%"}} source={{uri: uri}} /> 
+                <FastImage style={{height: "100%", width: "100%"}} source={{uri: uri}} />
             </Pressable> 
         )
     }
