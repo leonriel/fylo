@@ -239,7 +239,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 15,
-        overflow: "hidden"
+        overflow: "hidden",
+        borderColor: "orange",
+        borderWidth: 2
     },
     header: {
         flexDirection: "row", 

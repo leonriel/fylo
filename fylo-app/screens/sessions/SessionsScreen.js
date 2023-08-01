@@ -69,7 +69,7 @@ const SessionsScreen = ({ navigation, sessions, user }) => {
                                 <Ionicons name="chevron-down" size={30} color="black" />
                             </Pressable>
                         </View>
-                        <NameSessionScreen navigation={navigation} user={user} />
+                        <NameSessionScreen navigation={navigation} user={user} sessions={sessions} handleClose={() => setCreateSessionModalVisible(false)} />
                     </SafeAreaView>
                 </SafeAreaProvider>
             </Modal>

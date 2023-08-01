@@ -1,5 +1,7 @@
 import { StyleSheet, Text, TextInput, Pressable, View, FlatList, Image, Alert } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
+import { SessionsContext } from "../../contexts/SessionsContext";
 import { AntDesign, FontAwesome, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 import Input from '../../components/Input';
@@ -7,7 +9,9 @@ import { getAllUsers, searchUsers } from '../../utils/Users';
 import { createSession } from "../../utils/Sessions";
 import Button from '../../components/Button';
   
-const NameSessionScreen = ({ navigation, user, sessions }) => {
+const NameSessionScreen = ({ navigation, user, sessions, handleClose}) => {
+    const { refreshUser } = useContext(AuthContext);
+    const { reloadSessions } = useContext(SessionsContext);
     const [searchText, setSearchText] = useState("");
     const [matchingUsers, setMatchingUsers] = useState([]);
     const [sessionName, setSessionName] = useState("");
@@ -72,10 +76,10 @@ const NameSessionScreen = ({ navigation, user, sessions }) => {
             }
             const newSession = await createSession(user._id, sessionName);
             user.sessions.push(newSession._id);
-            navigation.navigate('Sessions Navigator', {screen: 'Sessions'})
-            setCreateSessionModalVisible(false);
+            // navigation.navigate('Sessions Navigator', {screen: 'Sessions'})
             refreshUser(user.username);
             reloadSessions(user.sessions);
+            handleClose();
         } catch (error) {
             Alert.alert(error.message);
         }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Alert } from 'react-native';
 import { Storage } from 'aws-amplify';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -13,7 +14,7 @@ export const createSession = async (userId, sessionName) => {
     
         return resp.data;
     } catch (error) {
-        console.log(error.response.data);
+        throw new Error(error.response.data);
     }
 }
 

@@ -13,7 +13,8 @@ const FriendsScreen = ({navigation, user}) => {
     const [outgoingRequests, setOutgoingRequests] = useState([]);
     const [friends, setFriends] = useState([]);
     const [results, setResults] = useState([]);
-
+    const [focused, setFocused] = useState(false);
+    
     const searchBar = useRef('');
 
     useEffect(() => {
@@ -48,10 +49,13 @@ const FriendsScreen = ({navigation, user}) => {
         setFriends(friends);
     }
 
-    const handleSearch = async (query) => {
-        const searchResults = await searchUsers(query);
-
-        setResults(searchResults);
+    const handleSearch = async (text) => {
+        if (text) {
+            const searchResults = await searchUsers(text);
+            setResults(searchResults);
+        } else {
+            setResults([]);
+        }
     }
 
     const handleSendFriendRequest = async (friendId) => {
@@ -102,17 +106,41 @@ const FriendsScreen = ({navigation, user}) => {
             console.log(error);
         }
     }
+
+    const handleCancelSearch = async () => {
+        searchBar.current.blur();
+        Keyboard.dismiss();
+    }
     
     return (
         <View style={styles.container}>
-            <View style={styles.searchBarContainer}>
-                <Entypo name="magnifying-glass" size={24} color="black" />
-                <TextInput 
-                    ref={input => {searchBar.current = input}}
-                    style={styles.searchBar} 
-                    placeholder="Add or search friends"
-                    onChangeText={(text) => handleSearch(text)}
-                />
+            <View style={styles.searchComponent}>
+                <View style={styles.searchBarContainer}>
+                    <Entypo name="magnifying-glass" size={24} color="black" />
+                    <TextInput 
+                        autoCorrect={false}
+                        clearButtonMode={'while-editing'}
+                        ref={input => {searchBar.current = input}}
+                        style={styles.searchBar} 
+                        placeholder="Add or search friends"
+                        onChangeText={(text) => searchBar.current.isFocused() && handleSearch(text)}
+                        onFocus={() => setFocused(true)}
+                        onBlur={(e) => {searchBar.current.clear(); setResults([]); setFocused(false);}}
+                    />
+                </View>
+                {focused && <View style={styles.cancelSearch}>
+                    <Button 
+                        borderRadius={20}
+                        backgroundColor="#E8763A"
+                        height={25}
+                        aspectRatio="3/1"
+                        fontFamily="Quicksand-SemiBold"
+                        fontColor="white"
+                        fontSize={15}
+                        text="Cancel"
+                        handler={handleCancelSearch}
+                    />
+                </View>}
             </View>
             {outgoingRequests.length > 0 && (
                 <View style={styles.section}>
@@ -327,7 +355,7 @@ const styles = StyleSheet.create({
         justifyContent: "flex-start",
         alignItems:"center",
         alignSelf: "center",
-        width: "90%",
+        flex: 5,
         backgroundColor: 'rgba(0, 0, 0, 0.1)',
         borderRadius: 20,
         paddingHorizontal: 10,
@@ -335,12 +363,21 @@ const styles = StyleSheet.create({
         height: 40,
         overflow: "hidden",
     },
+    searchComponent: {
+        width: "90%",
+        alignSelf: "center",
+        flexDirection: "row"
+    },
     searchBar: {
         width: "90%", 
         height: "100%", 
         fontSize: 20, 
         fontFamily: "Quicksand-Regular", 
         paddingHorizontal: 5
+    },
+    cancelSearch: {
+        alignSelf: "center",
+        marginLeft: 10
     },
     dropdown: {
         backgroundColor: "white", 
