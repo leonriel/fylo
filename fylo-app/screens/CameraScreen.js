@@ -116,7 +116,7 @@ const CameraScreen = ({ user, sessions, handleClose }) => {
             let thumbnail;
             if (contentType == "video") {
                 thumbnail = await VideoThumbnails.getThumbnailAsync(image);
-                thumbnail = await fetch(thumbnail);
+                thumbnail = await fetch(thumbnail.uri);
                 thumbnail = await thumbnail.blob();
             }
             await uploadPhoto(activeSession, blob, user, contentType, thumbnail).then(async (resp) => {

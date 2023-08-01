@@ -84,10 +84,18 @@ const PhotosScreen = ({ navigation, session, user }) => {
 
         const imgComponents = session.photos.map((photo, index) => {
             const url = `${CLOUDFRONT_DOMAIN}/public/${photo.key}`;
+            const type = photo.type;
+
+            let thumbnail;
+            if (type == "video") {
+                thumbnail = `${CLOUDFRONT_DOMAIN}/public/${photo.thumbnail}`
+            }
+
             return ({
                 id: numPhotos - index,
                 uri: url,
-                type: photo.type
+                type: photo.type,
+                thumbnail: thumbnail
             })
         });
 
@@ -119,6 +127,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
             mediaTypes: ImagePicker.MediaTypeOptions.All,
             quality: 1
         });
+
           
         if (!result.canceled) {
             try {
@@ -136,7 +145,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                 let thumbnail;
                 if (contentType == "video") {
                     thumbnail = await VideoThumbnails.getThumbnailAsync(photo.uri);
-                    thumbnail = await fetch(thumbnail);
+                    thumbnail = await fetch(thumbnail.uri);
                     thumbnail = await thumbnail.blob();
                 }
                 await uploadPhoto(session, blob, user, contentType, thumbnail).then(async (resp) => {
@@ -217,7 +226,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
         setModalVisible(true);
     }
 
-    const Photo = ({ uri, id, index, type }) => {
+    const Photo = ({ uri, id, index, type, thumbnail }) => {
         let gap;
         const numPhotos = photos.length;
         if (numPhotos % 4 == 0 && id % 4 != 0) {
@@ -236,9 +245,11 @@ const PhotosScreen = ({ navigation, session, user }) => {
             gap = {paddingLeft: 1}
         }
 
+        const displayImage = thumbnail ? thumbnail : uri;
+
         return (
             <Pressable onPress={() => handleOpenCarousel(index)} style={{flex: 1, aspectRatio: 1, minWidth: Dimensions.get('window').width / 4, maxWidth: Dimensions.get('window').width / 4, ...gap}}>
-                <FastImage style={{height: "100%", width: "100%"}} source={{uri: uri}} />
+                <FastImage style={{height: "100%", width: "100%"}} source={{uri: displayImage}} />
             </Pressable> 
         )
     }
@@ -252,7 +263,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                         <FlatList 
                             data={photos}
                             renderItem={({item, index}) => {
-                                return <Photo uri={item.uri} id={item.id} index={index} type={item.type} />
+                                return <Photo uri={item.uri} id={item.id} index={index} type={item.type} thumbnail={item.thumbnail} />
                             }}
                             keyExtractor={(item) => item.id}
                             numColumns={4}
