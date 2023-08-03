@@ -4,7 +4,7 @@ import { Video, ResizeMode } from 'expo-av';
 // import VideoPlayer from 'expo-video-player';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import { useState, useEffect, useRef, useContext } from 'react';
-import { StyleSheet, Text, Pressable, View, Alert, ImageBackground } from 'react-native';
+import { StyleSheet, Text, Pressable, View, Alert, ImageBackground, ActivityIndicator } from 'react-native';
 import { Entypo, Ionicons } from '@expo/vector-icons';
 import { uploadPhoto } from '../utils/Sessions';
 import { SessionsContext } from '../contexts/SessionsContext';
@@ -23,6 +23,7 @@ const CameraScreen = ({ user, sessions, handleClose }) => {
     const [videoMode, setVideoMode] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [videoStatus, setVideoStatus] = useState({});
+    const [activityIndicator, setActivityIndicator] = useState(false);
     
     const video = useRef(null);
     
@@ -105,6 +106,7 @@ const CameraScreen = ({ user, sessions, handleClose }) => {
 
     const handlePhotoUpload = async () => {
         try {
+            setActivityIndicator(true);
             if (!user.hasActiveSession) {
                 throw new Error("No active session to upload to.");
             }
@@ -128,6 +130,7 @@ const CameraScreen = ({ user, sessions, handleClose }) => {
             Alert.alert(error.message);
         } finally {
             setImage(null);
+            setActivityIndicator(false);
         }
     }
 
@@ -209,6 +212,7 @@ const CameraScreen = ({ user, sessions, handleClose }) => {
                     <Button onPress={toggleCameraType} icon='cycle' color='#fff' size={30} />   
                 </View>
             )}
+            {activityIndicator && <ActivityIndicator />}
             <View style={styles.footer}>
                 {!image ? (
                     <>
