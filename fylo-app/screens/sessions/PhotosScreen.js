@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext, useRef } from 'react';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
-import { FlatList, View, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions, TextInput } from 'react-native';
+import { FlatList, View, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions, TextInput, Keyboard, RefreshControl } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
@@ -40,6 +40,8 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [pendingOutgoingInvites, setPendingOutgoingInvites] = useState([]);
     const [collaborators, setCollaborators] = useState([]);
     const [friends, setFriends] = useState([]);
+    const [focused, setFocused] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     const searchBar = useRef(null);
     const offset = useRef(0);
@@ -254,6 +256,23 @@ const PhotosScreen = ({ navigation, session, user }) => {
         )
     }
 
+    const handleCancelSearch = async () => {
+        searchBar.current.blur();
+        Keyboard.dismiss();
+    }
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        setTimeout(async () => {
+            await reloadSessions(user.sessions);
+            await loadPhotos();
+            await loadOutgoingInvitations();
+            await loadCollaborators();
+            await loadFriends();
+            setRefreshing(false);
+        }, 1000);
+    }
+
     return (
         <View style={{flex: 1}}>
             {activityIndicator && <ActivityIndicator />} 
@@ -270,6 +289,8 @@ const PhotosScreen = ({ navigation, session, user }) => {
                             ItemSeparatorComponent={() => <View style={{height: 1}} />}
                             refreshing={true}
                             scrollEnabled={true}
+                            contentContainerStyle={{height: "100%"}}
+                            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
                         />
                     </View>
                     <PhotoCarousel visible={modalVisible} photos={photos} handleClose={() => setModalVisible(false)} offset={offset} />
@@ -345,19 +366,39 @@ const PhotosScreen = ({ navigation, session, user }) => {
                             </Pressable>
                         </View>
                         <Text style={{fontFamily: "Quicksand-SemiBold", fontSize: 24, marginBottom: 20}}>Invite Collaborators</Text>
-                        <View style={styles.searchBarContainer}>
-                            <Entypo name="magnifying-glass" size={24} color="black" />
-                            <TextInput 
-                                ref={input => {searchBar.current = input}}
-                                style={styles.searchBar} 
-                                placeholder="Search for collaborators"
-                                onChangeText={(text) => handleSearchUsers(text)}
-                            />
+                        <View style={styles.searchComponent}>
+                            <View style={styles.searchBarContainer}>
+                                <Entypo name="magnifying-glass" size={24} color="black" />
+                                <TextInput 
+                                    autoCorrect={false}
+                                    clearButtonMode={'while-editing'}
+                                    ref={input => {searchBar.current = input}}
+                                    style={styles.searchBar} 
+                                    placeholder="Search for collaborators"
+                                    onChangeText={(text) => searchBar.current.isFocused() && handleSearchUsers(text)}
+                                    onFocus={() => setFocused(true)}
+                                    onBlur={(e) => {searchBar.current.clear(); setSearchedUsers([]); setFocused(false);}}
+                                />
+                            </View>
+                            {focused && <View style={styles.cancelSearch}>
+                                <Button 
+                                    borderRadius={20}
+                                    backgroundColor="#E8763A"
+                                    height={25}
+                                    aspectRatio="3/1"
+                                    fontFamily="Quicksand-SemiBold"
+                                    fontColor="white"
+                                    fontSize={15}
+                                    text="Cancel"
+                                    handler={handleCancelSearch}
+                                />
+                            </View>}
                         </View>
                         {/* <Input label="Search" width="90%" placeholder="Search for collaborators" handler={(text) => handleSearchUsers(text)} /> */}
                         <View style={{width: "90%", marginTop: 20}}>
                             <Text style={{fontFamily: "Quicksand-Bold", fontSize: 12}}>INVITED</Text>
                             <FlatList 
+                                // data={collaborators.concat(pendingOutgoingInvites)}
                                 data={pendingOutgoingInvites}
                                 renderItem={({ item }) => (
                                     <UserListItem 
@@ -365,11 +406,24 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                         lastName={item.lastName} 
                                         fullName={item.fullName} 
                                         username={item.username} 
-                                        button={
-                                            <Pressable onPress={() => handleCancelInvite(item._id)}>
-                                                <Entypo name="cross" size={16} color="gray" />
-                                            </Pressable>
-                                        }
+                                        button={() => {
+                                            // if (collaborators.some(collaborator => collaborator.username == item.username)) {
+                                            //     return (<Button 
+                                            //         borderRadius={20}
+                                            //         backgroundColor="#E8763A"
+                                            //         height={25}
+                                            //         aspectRatio="3/1"
+                                            //         fontFamily="Quicksand-SemiBold"
+                                            //         fontColor="white"
+                                            //         fontSize={15}
+                                            //         text="Joined"
+                                            //     />)
+                                            // } else {
+                                                return (<Pressable onPress={() => handleCancelInvite(item._id)}>
+                                                    <Entypo name="cross" size={16} color="gray" />
+                                                </Pressable>)
+                                            // }
+                                        }}
                                     />
                                 )}
                                 keyExtractor={(item) => item.username}
@@ -380,7 +434,49 @@ const PhotosScreen = ({ navigation, session, user }) => {
                             <Text style={{fontFamily: "Quicksand-Bold", fontSize: 12}}>FRIENDS</Text>
                             <FlatList 
                                 data={friends}
-                                renderItem={({ item }) => <UserListItem firstName={item.firstName} lastName={item.lastName} fullName={item.fullName} username={item.username} />}
+                                renderItem={({ item }) => <UserListItem 
+                                    firstName={item.firstName} 
+                                    lastName={item.lastName} 
+                                    fullName={item.fullName} 
+                                    username={item.username} 
+                                    button={() => {
+                                        if (pendingOutgoingInvites.some(invite => invite.username == item.username)) {
+                                            return <Button 
+                                                borderRadius={20}
+                                                backgroundColor="#E8763A"
+                                                height={25}
+                                                aspectRatio="3/1"
+                                                fontFamily="Quicksand-SemiBold"
+                                                fontColor="white"
+                                                fontSize={15}
+                                                text="Invited"
+                                            />
+                                        } else if (collaborators.some(collaborator => collaborator.username == item.username)) {
+                                            return <Button 
+                                                borderRadius={20}
+                                                backgroundColor="#E8763A"
+                                                height={25}
+                                                aspectRatio="3/1"
+                                                fontFamily="Quicksand-SemiBold"
+                                                fontColor="white"
+                                                fontSize={15}
+                                                text="Joined"
+                                            />
+                                        } else {
+                                            return <Button 
+                                                borderRadius={20}
+                                                backgroundColor="#E8763A"
+                                                height={25}
+                                                aspectRatio="3/1"
+                                                fontFamily="Quicksand-SemiBold"
+                                                fontColor="white"
+                                                fontSize={15}
+                                                text="Invite"
+                                                handler={() => handleSendSessionInvite(item._id)}
+                                            />
+                                        }
+                                    }}
+                                />}
                                 keyExtractor={(item) => item.username}
                                 scrollEnabled={false}
                             />
@@ -467,12 +563,17 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         marginVertical: 10
     },
+    searchComponent: {
+        width: "90%",
+        alignSelf: "center",
+        flexDirection: "row"
+    },
     searchBarContainer: {
         flexDirection: "row",
         justifyContent: "flex-start",
         alignItems:"center",
         alignSelf: "center",
-        width: "90%",
+        flex: 5,
         backgroundColor: 'rgba(0, 0, 0, 0.1)',
         borderRadius: 20,
         paddingHorizontal: 10,
@@ -486,6 +587,10 @@ const styles = StyleSheet.create({
         fontSize: 20, 
         fontFamily: "Quicksand-Regular", 
         paddingHorizontal: 5
+    },
+    cancelSearch: {
+        alignSelf: "center",
+        marginLeft: 10
     },
     text: {
         fontSize: 20

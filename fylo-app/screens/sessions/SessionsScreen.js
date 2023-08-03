@@ -1,14 +1,26 @@
-import { useState } from 'react';
-import { Pressable, View, StyleSheet, FlatList, Text, Modal } from 'react-native';
+import { useState, useContext } from 'react';
+import { Pressable, View, StyleSheet, FlatList, Text, Modal, RefreshControl } from 'react-native';
 // import { Image } from 'expo-image';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import FastImage from 'react-native-fast-image';
 import SessionListItem from  '../../components/SessionListItem';
 import NameSessionScreen from '../create_session/NameSessionScreen';
 import { AntDesign, Ionicons } from '@expo/vector-icons'; 
+import { SessionsContext } from '../../contexts/SessionsContext';
 
 const SessionsScreen = ({ navigation, sessions, user }) => {
+    const { reloadSessions } = useContext(SessionsContext);
+
     const [createSessionModalVisible, setCreateSessionModalVisible] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        setTimeout(async () => {
+            await reloadSessions(user.sessions);
+            setRefreshing(false);
+        }, 1000);
+    }
 
     return (
         <View style={{flex: 1, alignItems: "center", marginTop: 10}}>
@@ -55,6 +67,7 @@ const SessionsScreen = ({ navigation, sessions, user }) => {
                     keyExtractor={(item) => item._id}
                     ItemSeparatorComponent={() => <View style={{height: 10, backgroundColor: "transparent"}} />}
                     contentContainerStyle={{paddingVertical: 10, height: "100%"}}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
                 />
             </View>
             <Modal
