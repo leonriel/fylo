@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext, useRef } from 'react';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
-import { FlatList, View, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions, TextInput, Keyboard, RefreshControl } from 'react-native';
+import { FlatList, View, Alert, Modal, StyleSheet, Pressable, Text, ActivityIndicator, Dimensions, TextInput, Keyboard, RefreshControl, ScrollView } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
@@ -41,7 +41,9 @@ const PhotosScreen = ({ navigation, session, user }) => {
     const [collaborators, setCollaborators] = useState([]);
     const [friends, setFriends] = useState([]);
     const [focused, setFocused] = useState(false);
-    const [refreshing, setRefreshing] = useState(false);
+    const [refreshingPhotos, setRefreshingPhotos] = useState(false);
+    const [refreshingInvitees, setRefreshingInvitees] = useState(false);
+    const [refreshingCollaborators, setRefreshingCollaborators] = useState(false);
 
     const searchBar = useRef(null);
     const offset = useRef(0);
@@ -257,19 +259,41 @@ const PhotosScreen = ({ navigation, session, user }) => {
     }
 
     const handleCancelSearch = async () => {
-        searchBar.current.blur();
         Keyboard.dismiss();
+        searchBar.current.clear();
+        setSearchedUsers([]);
+        setFocused(false);
     }
 
-    const handleRefresh = async () => {
-        setRefreshing(true);
+    const handleRefreshPhotos = async () => {
+        setRefreshingPhotos(true);
         setTimeout(async () => {
+            await refreshUser(user.username);
             await reloadSessions(user.sessions);
             await loadPhotos();
+            setRefreshingPhotos(false);
+        }, 1000);
+    }
+
+    const handleRefreshInvitees = async () => {
+        setRefreshingInvitees(true)
+        setTimeout(async () => {
+            await refreshUser(user.username);
+            await reloadSessions(user.sessions);
             await loadOutgoingInvitations();
             await loadCollaborators();
             await loadFriends();
-            setRefreshing(false);
+            setRefreshingInvitees(false);
+        }, 1000);
+    }
+
+    const handleRefreshCollaborators = async () => {
+        setRefreshingCollaborators(true);
+        setTimeout(async () => {
+            await refreshUser(user.username);
+            await reloadSessions(user.sessions);
+            await loadCollaborators();
+            setRefreshingCollaborators(false);
         }, 1000);
     }
 
@@ -290,7 +314,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                             refreshing={true}
                             scrollEnabled={true}
                             contentContainerStyle={{height: "100%"}}
-                            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+                            refreshControl={<RefreshControl refreshing={refreshingPhotos} onRefresh={handleRefreshPhotos} />}
                         />
                     </View>
                     <PhotoCarousel visible={modalVisible} photos={photos} handleClose={() => setModalVisible(false)} offset={offset} />
@@ -316,34 +340,39 @@ const PhotosScreen = ({ navigation, session, user }) => {
                         <Text style={{fontSize: 20, fontFamily: "Quicksand-Regular", marginBottom: 10}}>{session.photos.length} Photos</Text>
                         <View style={{width: "90%"}}>
                             <Text style={{fontSize: 12, fontFamily: "Quicksand-SemiBold"}}>COLLABORATORS</Text>
-                            <View style={{marginBottom: 20}}>
-                                <FlatList
-                                    data={collaborators}
-                                    renderItem={({item}) => <UserListItem 
-                                        firstName={item.firstName} 
-                                        lastName={item.lastName} 
-                                        fullName={item.fullName} 
-                                        username={item.username} 
-                                        button={
-                                            session.owner == item._id ? (
-                                                <Text style={{fontSize: 10, fontFamily: "Quicksand-Regular", color: "gray"}}>Owner</Text>
-                                            ) : null}
-                                    />}
-                                    keyExtractor={(item) => item.username}
-                                    scrollEnabled={false}
-                                />
-                            </View>
-                            {session.owner == user._id && session.isActive ? <Button 
-                                borderRadius={20}
-                                backgroundColor="#E8763A"
-                                height={25}
-                                width="90%"
-                                fontFamily="Quicksand-SemiBold"
-                                fontColor="white"
-                                fontSize={15}
-                                text="END SESSION"
-                                handler={handleEndSession}
-                            /> : null }
+                            <ScrollView
+                                style={{height: "100%"}}
+                                refreshControl={<RefreshControl refreshing={refreshingCollaborators} onRefresh={handleRefreshCollaborators} />}
+                            >
+                                <View style={{marginBottom: 20}}>
+                                    <FlatList
+                                        data={collaborators}
+                                        renderItem={({item}) => <UserListItem 
+                                            firstName={item.firstName} 
+                                            lastName={item.lastName} 
+                                            fullName={item.fullName} 
+                                            username={item.username} 
+                                            button={
+                                                session.owner == item._id ? (
+                                                    <Text style={{fontSize: 10, fontFamily: "Quicksand-Regular", color: "gray"}}>Owner</Text>
+                                                ) : null}
+                                        />}
+                                        keyExtractor={(item) => item.username}
+                                        scrollEnabled={false}
+                                    />
+                                </View>
+                                {session.owner == user._id && session.isActive ? <Button 
+                                    borderRadius={20}
+                                    backgroundColor="#E8763A"
+                                    height={25}
+                                    width="90%"
+                                    fontFamily="Quicksand-SemiBold"
+                                    fontColor="white"
+                                    fontSize={15}
+                                    text="END SESSION"
+                                    handler={handleEndSession}
+                                /> : null }
+                            </ScrollView>
                         </View>
                     </SafeAreaView>
                 </SafeAreaProvider>
@@ -375,9 +404,9 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                     ref={input => {searchBar.current = input}}
                                     style={styles.searchBar} 
                                     placeholder="Search for collaborators"
-                                    onChangeText={(text) => searchBar.current.isFocused() && handleSearchUsers(text)}
+                                    placeholderTextColor='gray'
+                                    onChangeText={(text) => handleSearchUsers(text)}
                                     onFocus={() => setFocused(true)}
-                                    onBlur={(e) => {searchBar.current.clear(); setSearchedUsers([]); setFocused(false);}}
                                 />
                             </View>
                             {focused && <View style={styles.cancelSearch}>
@@ -395,92 +424,100 @@ const PhotosScreen = ({ navigation, session, user }) => {
                             </View>}
                         </View>
                         {/* <Input label="Search" width="90%" placeholder="Search for collaborators" handler={(text) => handleSearchUsers(text)} /> */}
-                        <View style={{width: "90%", marginTop: 20}}>
-                            <Text style={{fontFamily: "Quicksand-Bold", fontSize: 12}}>INVITED</Text>
-                            <FlatList 
-                                // data={collaborators.concat(pendingOutgoingInvites)}
-                                data={pendingOutgoingInvites}
-                                renderItem={({ item }) => (
-                                    <UserListItem 
+                        <ScrollView
+                            contentContainerStyle={{height: "100%", width: "100%", alignItems: "center"}}
+                            keyboardShouldPersistTaps='handled'
+                            refreshControl={<RefreshControl refreshing={refreshingInvitees} onRefresh={handleRefreshInvitees} />}
+                        >
+                            <View style={{width: "90%", marginTop: 20}}>
+                                <Text style={{fontFamily: "Quicksand-Bold", fontSize: 12}}>INVITED</Text>
+                                <FlatList 
+                                    // data={collaborators.concat(pendingOutgoingInvites)}
+                                    data={pendingOutgoingInvites}
+                                    renderItem={({ item }) => (
+                                        <UserListItem 
+                                            firstName={item.firstName} 
+                                            lastName={item.lastName} 
+                                            fullName={item.fullName} 
+                                            username={item.username} 
+                                            button={() => {
+                                                // if (collaborators.some(collaborator => collaborator.username == item.username)) {
+                                                //     return (<Button 
+                                                //         borderRadius={20}
+                                                //         backgroundColor="#E8763A"
+                                                //         height={25}
+                                                //         aspectRatio="3/1"
+                                                //         fontFamily="Quicksand-SemiBold"
+                                                //         fontColor="white"
+                                                //         fontSize={15}
+                                                //         text="Joined"
+                                                //     />)
+                                                // } else {
+                                                    return (<Pressable onPress={() => handleCancelInvite(item._id)}>
+                                                        <Entypo name="cross" size={16} color="gray" />
+                                                    </Pressable>)
+                                                // }
+                                            }}
+                                        />
+                                    )}
+                                    keyExtractor={(item) => item.username}
+                                    scrollEnabled={false}
+                                    keyboardShouldPersistTaps='handled'
+                                />
+                            </View>
+                            <View style={{width: "90%", marginTop: 20}}>
+                                <Text style={{fontFamily: "Quicksand-Bold", fontSize: 12}}>FRIENDS</Text>
+                                <FlatList 
+                                    data={friends}
+                                    renderItem={({ item }) => <UserListItem 
                                         firstName={item.firstName} 
                                         lastName={item.lastName} 
                                         fullName={item.fullName} 
                                         username={item.username} 
                                         button={() => {
-                                            // if (collaborators.some(collaborator => collaborator.username == item.username)) {
-                                            //     return (<Button 
-                                            //         borderRadius={20}
-                                            //         backgroundColor="#E8763A"
-                                            //         height={25}
-                                            //         aspectRatio="3/1"
-                                            //         fontFamily="Quicksand-SemiBold"
-                                            //         fontColor="white"
-                                            //         fontSize={15}
-                                            //         text="Joined"
-                                            //     />)
-                                            // } else {
-                                                return (<Pressable onPress={() => handleCancelInvite(item._id)}>
-                                                    <Entypo name="cross" size={16} color="gray" />
-                                                </Pressable>)
-                                            // }
+                                            if (pendingOutgoingInvites.some(invite => invite.username == item.username)) {
+                                                return <Button 
+                                                    borderRadius={20}
+                                                    backgroundColor="#E8763A"
+                                                    height={25}
+                                                    aspectRatio="3/1"
+                                                    fontFamily="Quicksand-SemiBold"
+                                                    fontColor="white"
+                                                    fontSize={15}
+                                                    text="Invited"
+                                                />
+                                            } else if (collaborators.some(collaborator => collaborator.username == item.username)) {
+                                                return <Button 
+                                                    borderRadius={20}
+                                                    backgroundColor="#E8763A"
+                                                    height={25}
+                                                    aspectRatio="3/1"
+                                                    fontFamily="Quicksand-SemiBold"
+                                                    fontColor="white"
+                                                    fontSize={15}
+                                                    text="Joined"
+                                                />
+                                            } else {
+                                                return <Button 
+                                                    borderRadius={20}
+                                                    backgroundColor="#E8763A"
+                                                    height={25}
+                                                    aspectRatio="3/1"
+                                                    fontFamily="Quicksand-SemiBold"
+                                                    fontColor="white"
+                                                    fontSize={15}
+                                                    text="Invite"
+                                                    handler={() => handleSendSessionInvite(item._id)}
+                                                />
+                                            }
                                         }}
-                                    />
-                                )}
-                                keyExtractor={(item) => item.username}
-                                scrollEnabled={false}
-                            />
-                        </View>
-                        <View style={{width: "90%", marginTop: 20}}>
-                            <Text style={{fontFamily: "Quicksand-Bold", fontSize: 12}}>FRIENDS</Text>
-                            <FlatList 
-                                data={friends}
-                                renderItem={({ item }) => <UserListItem 
-                                    firstName={item.firstName} 
-                                    lastName={item.lastName} 
-                                    fullName={item.fullName} 
-                                    username={item.username} 
-                                    button={() => {
-                                        if (pendingOutgoingInvites.some(invite => invite.username == item.username)) {
-                                            return <Button 
-                                                borderRadius={20}
-                                                backgroundColor="#E8763A"
-                                                height={25}
-                                                aspectRatio="3/1"
-                                                fontFamily="Quicksand-SemiBold"
-                                                fontColor="white"
-                                                fontSize={15}
-                                                text="Invited"
-                                            />
-                                        } else if (collaborators.some(collaborator => collaborator.username == item.username)) {
-                                            return <Button 
-                                                borderRadius={20}
-                                                backgroundColor="#E8763A"
-                                                height={25}
-                                                aspectRatio="3/1"
-                                                fontFamily="Quicksand-SemiBold"
-                                                fontColor="white"
-                                                fontSize={15}
-                                                text="Joined"
-                                            />
-                                        } else {
-                                            return <Button 
-                                                borderRadius={20}
-                                                backgroundColor="#E8763A"
-                                                height={25}
-                                                aspectRatio="3/1"
-                                                fontFamily="Quicksand-SemiBold"
-                                                fontColor="white"
-                                                fontSize={15}
-                                                text="Invite"
-                                                handler={() => handleSendSessionInvite(item._id)}
-                                            />
-                                        }
-                                    }}
-                                />}
-                                keyExtractor={(item) => item.username}
-                                scrollEnabled={false}
-                            />
-                        </View>
+                                    />}
+                                    keyExtractor={(item) => item.username}
+                                    scrollEnabled={false}
+                                    keyboardShouldPersistTaps='handled'
+                                />
+                            </View>
+                        </ScrollView>
                         <View 
                             style={{
                                 backgroundColor: "white", 
@@ -541,6 +578,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                                     }}
                                 />}
                                 keyExtractor={(item) => item.username}
+                                keyboardShouldPersistTaps='handled'
                             />
                         </View>
                     </SafeAreaView>

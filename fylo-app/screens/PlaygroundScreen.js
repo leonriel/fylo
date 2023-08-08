@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { SafeAreaView, View, Text, StyleSheet, FlatList, ScrollView, Pressable, Alert } from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet, FlatList, ScrollView, Pressable, Alert, RefreshControl } from 'react-native';
 // import { Image } from 'expo-image';
 import FastImage from 'react-native-fast-image';
 import SessionListItem from '../components/SessionListItem';
@@ -15,6 +15,7 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
     const { reloadSessions } = useContext(SessionsContext);
     
     const [sessionInvites, setSessionInvites] = useState([]);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         getInvites();
@@ -58,6 +59,14 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
 
     const handleSignOut = () => {
         signOut();
+    }
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        setTimeout(async () => {
+            await getInvites();
+            setRefreshing(false);
+        }, 1000)
     }
 
     return (
@@ -109,6 +118,7 @@ const PlaygroundScreen = ({navigation, user, sessions}) => {
                             </Pressable>}
                         />}
                         keyExtrator={item => item.session._id}
+                        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
                     />
                 </ScrollView>
             </View>

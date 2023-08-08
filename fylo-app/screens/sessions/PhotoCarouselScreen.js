@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Modal, FlatList, View, Dimensions, Pressable, Alert, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
+// import { Image } from 'expo-image';
 import { Video, ResizeMode } from 'expo-av';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';

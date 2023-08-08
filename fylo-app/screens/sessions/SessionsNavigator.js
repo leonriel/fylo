@@ -9,7 +9,7 @@ import { MaterialCommunityIcons, AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons'; 
 import { CLOUDFRONT_DOMAIN } from '@env';
 
-const SessionsNavigator = ({ navigation, sessions, user }) => {
+const SessionsNavigator = ({ navigation, sessions, user, handleOpenCamera }) => {
     const Stack = createStackNavigator();
 
     useEffect(() => {
@@ -22,7 +22,11 @@ const SessionsNavigator = ({ navigation, sessions, user }) => {
 
     return (
         <Stack.Navigator initialRouteName="Sessions">
-            <Stack.Screen name="Sessions" children={(props) => <SessionsScreen {...props} sessions={sessions} user={user} />} options={{headerShown: false}}/>
+            <Stack.Screen 
+                name="Sessions" 
+                children={(props) => <SessionsScreen {...props} sessions={sessions} user={user} handleOpenCamera={handleOpenCamera} />} 
+                options={{headerShown: false}}
+            />
             {/* {galleries} */}
             {sessions.map(session => {
                 return <Stack.Screen 

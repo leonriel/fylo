@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Alert, Dimensions, ActivityIndicator, Modal, Pressable, View } from 'react-native';
 import FastImage from 'react-native-fast-image';
+// import { Image } from 'expo-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -201,7 +202,7 @@ export default function App() {
           <NavigationContainer onReady={onFinishedMounting} theme={{...DefaultTheme, colors: {...DefaultTheme.colors, background: "white"}}}>
               {isSignedIn ? (
                 user ? (
-                <SessionsContext.Provider value={sessionsContext}>
+                  <SessionsContext.Provider value={sessionsContext}>
                     <SafeAreaView style={{flex: 1}} edges={['top', 'right', 'left']}>
                       <View style={styles.header}>
                         <Ionicons name="settings-outline" size={30} color="black" />                        
@@ -256,7 +257,7 @@ export default function App() {
                         /> */}
                         <Tab.Screen 
                             name="Sessions Navigator" 
-                            children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
+                            children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} handleOpenCamera={() => setCameraModalVisible(true)} />} 
                             options={{
                               tabBarShowLabel: false,
                               tabBarIcon: ({focused, color}) => {
@@ -278,20 +279,8 @@ export default function App() {
                               }
                             }}
                         />
-                    </Tab.Navigator>
-                    <Modal 
-                      visible={cameraModalVisible}
-                      animationType="slide"
-                      onDismiss={() => setCameraModalVisible(false)}
-                    >
-                      <View style={{flex: 1, backgroundColor: "black"}}>
-                        <SafeAreaProvider>
-                          <SafeAreaView style={{flex: 1}} edges={['top', 'left', 'right']}>
-                              <CameraScreen user={user} sessions={sessions} handleClose={() => setCameraModalVisible(false)} />
-                          </SafeAreaView>
-                        </SafeAreaProvider>
-                      </View>
-                    </Modal>
+                      </Tab.Navigator>
+                      <CameraScreen user={user} sessions={sessions} visible={cameraModalVisible} handleClose={() => setCameraModalVisible(false)} />
                     </SafeAreaView>
                   </SessionsContext.Provider>
                 ) : (
@@ -331,9 +320,9 @@ const styles = StyleSheet.create({
     height: 30
   },
   logo: {
-      height: 30, 
-      aspectRatio: "228/76",
-      marginRight: 'auto',
-      marginLeft: 'auto'
+    height: 30, 
+    aspectRatio: "228/76",
+    marginRight: 'auto',
+    marginLeft: 'auto'
   }
 });

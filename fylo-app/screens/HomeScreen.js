@@ -55,7 +55,7 @@ const HomeScreen = ({ navigation, sessions, user }) => {
                                     <Text style={styles.startSessionText}>Start</Text>
                                     <Pressable onPress={() => setCreateSessionModalVisible(true)}>
                                         <View style={styles.startSessionButton}>
-                                            <FastImage style={styles.icon} source={require('../assets/icon-grey.png')} />
+                                            <Image style={styles.icon} source={require('../assets/icon-grey.png')} />
                                         </View>
                                     </Pressable>
                                     <Text style={styles.startSessionText}>Session</Text>

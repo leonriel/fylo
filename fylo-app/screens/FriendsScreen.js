@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useRef } from 'react';
-import { Text, StyleSheet, TextInput, Pressable, View, FlatList, Keyboard } from 'react-native';
+import { Text, StyleSheet, TextInput, Pressable, View, FlatList, Keyboard, ScrollView, RefreshControl } from 'react-native';
 import { getUsers, sendFriendRequest, removeFriend, searchUsers, getPendingIncomingFriendRequests, getPendingOutgoingFriendRequests, acceptFriendRequest, ignoreFriendRequest, cancelFriendRequest } from '../utils/Users';
 import { Entypo } from '@expo/vector-icons';
 import UserListItem from '../components/UserListItem';
@@ -14,7 +14,8 @@ const FriendsScreen = ({navigation, user}) => {
     const [friends, setFriends] = useState([]);
     const [results, setResults] = useState([]);
     const [focused, setFocused] = useState(false);
-    
+    const [refreshing, setRefreshing] = useState(false);
+
     const searchBar = useRef('');
 
     useEffect(() => {
@@ -108,8 +109,21 @@ const FriendsScreen = ({navigation, user}) => {
     }
 
     const handleCancelSearch = async () => {
-        searchBar.current.blur();
         Keyboard.dismiss();
+        searchBar.current.clear();
+        setResults([]);
+        setFocused(false);
+    }
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        setTimeout(async () => {
+            await refreshUser(user.username);
+            await loadIncomingRequests();
+            await loadOutgoingRequests();
+            await loadFriends();
+            setRefreshing(false);
+        }, 1000);
     }
     
     return (
@@ -123,9 +137,9 @@ const FriendsScreen = ({navigation, user}) => {
                         ref={input => {searchBar.current = input}}
                         style={styles.searchBar} 
                         placeholder="Add or search friends"
-                        onChangeText={(text) => searchBar.current.isFocused() && handleSearch(text)}
+                        placeholderTextColor='gray'
+                        onChangeText={(text) => handleSearch(text)}
                         onFocus={() => setFocused(true)}
-                        onBlur={(e) => {searchBar.current.clear(); setResults([]); setFocused(false);}}
                     />
                 </View>
                 {focused && <View style={styles.cancelSearch}>
@@ -142,168 +156,181 @@ const FriendsScreen = ({navigation, user}) => {
                     />
                 </View>}
             </View>
-            {outgoingRequests.length > 0 && (
-                <View style={styles.section}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>ADDED</Text>
-                    </View>
-                    <FlatList 
-                        data={outgoingRequests}
-                        renderItem={({item}) => {
-                            return (
-                                <UserListItem 
-                                    firstName={item.firstName} 
-                                    lastName={item.lastName} 
-                                    fullName={item.fullName} 
-                                    username={item.username}
-                                    button={
-                                        <Pressable onPress={() => handleCancelRequest(item._id)} >
-                                            <Entypo name="cross" size={16} color="gray" />
-                                        </Pressable>
-                                    }
-                                />
-                            )
-                        }} 
-                        keyExtractor={item => item._id}
-                        contentContainerStyle={{alignSelf: "center", width: "90%"}}
-                    />
-                </View>
-            )}
-            {incomingRequests.length > 0 && (
-                <View style={styles.section}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>ADDED ME</Text>
-                    </View>
-                    <FlatList 
-                        data={incomingRequests}
-                        renderItem={({item}) => {
-                            return (
-                                <UserListItem 
-                                    firstName={item.firstName} 
-                                    lastName={item.lastName} 
-                                    fullName={item.fullName} 
-                                    username={item.username}
-                                    button={
-                                        <>
-                                            <Button 
-                                                borderRadius={20}
-                                                backgroundColor="#E8763A"
-                                                height={25}
-                                                aspectRatio="3/1"
-                                                fontFamily="Quicksand-SemiBold"
-                                                fontColor="white"
-                                                fontSize={15}
-                                                text="+ Accept"
-                                                handler={() => handleAcceptFriendRequest(item._id)}
-                                            />
-                                            <Pressable onPress={() => handleIgnoreRequest(item._id)} >
+            <ScrollView 
+                contentContainerStyle={{height: "100%"}}                         
+                keyboardShouldPersistTaps='handled'
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} /> }
+            >
+                {outgoingRequests.length > 0 && (
+                    <View style={styles.section}>
+                        <View style={styles.header}>
+                            <Text style={styles.title}>ADDED</Text>
+                        </View>
+                        <FlatList 
+                            data={outgoingRequests}
+                            renderItem={({item}) => {
+                                return (
+                                    <UserListItem 
+                                        firstName={item.firstName} 
+                                        lastName={item.lastName} 
+                                        fullName={item.fullName} 
+                                        username={item.username}
+                                        button={
+                                            <Pressable onPress={() => handleCancelRequest(item._id)} >
                                                 <Entypo name="cross" size={16} color="gray" />
                                             </Pressable>
-                                        </>
-                                    }
-                                />
-                            )
-                        }} 
-                        keyExtractor={item => item._id}
-                        contentContainerStyle={styles.sectionContents}
-                    />
-                </View>
-            )}
-            <View style={styles.section}>
-                <View style={styles.header}>
-                    <Text style={styles.title}>FRIENDS</Text>
-                </View>
-                {friends.length > 0 ? (
-                    <FlatList 
-                        data={friends}
-                        renderItem={({item}) => {
-                            return (
-                                <UserListItem 
-                                    firstName={item.firstName} 
-                                    lastName={item.lastName} 
-                                    fullName={item.fullName} 
-                                    username={item.username}
-                                    button={
-                                        <Pressable onPress={() => handleRemoveFriend(item._id)} >
-                                            <Entypo name="cross" size={16} color="gray" />
-                                        </Pressable>
-                                    }
-                                />
-                            )
-                        }} 
-                        keyExtractor={item => item._id}
-                        contentContainerStyle={styles.sectionContents}
-                    />
-                ) : (
-                    <View style={{alignSelf: "center", width: "90%", alignItems: "center"}}>
-                        <Text style={{fontFamily: "Quicksand-Regular", fontSize: 20, textAlign: "center"}}>Add Fylo friends to make creating sessions easier!</Text>
+                                        }
+                                    />
+                                )
+                            }} 
+                            keyExtractor={item => item._id}
+                            contentContainerStyle={{alignSelf: "center", width: "90%"}}
+                            scrollEnabled={false}
+                            keyboardShouldPersistTaps='handled'
+                        />
                     </View>
                 )}
-            </View>
+                {incomingRequests.length > 0 && (
+                    <View style={styles.section}>
+                        <View style={styles.header}>
+                            <Text style={styles.title}>ADDED ME</Text>
+                        </View>
+                        <FlatList 
+                            data={incomingRequests}
+                            renderItem={({item}) => {
+                                return (
+                                    <UserListItem 
+                                        firstName={item.firstName} 
+                                        lastName={item.lastName} 
+                                        fullName={item.fullName} 
+                                        username={item.username}
+                                        button={
+                                            <>
+                                                <Button 
+                                                    borderRadius={20}
+                                                    backgroundColor="#E8763A"
+                                                    height={25}
+                                                    aspectRatio="3/1"
+                                                    fontFamily="Quicksand-SemiBold"
+                                                    fontColor="white"
+                                                    fontSize={15}
+                                                    text="+ Accept"
+                                                    handler={() => handleAcceptFriendRequest(item._id)}
+                                                />
+                                                <Pressable onPress={() => handleIgnoreRequest(item._id)} >
+                                                    <Entypo name="cross" size={16} color="gray" />
+                                                </Pressable>
+                                            </>
+                                        }
+                                    />
+                                )
+                            }} 
+                            keyExtractor={item => item._id}
+                            contentContainerStyle={styles.sectionContents}
+                            scrollEnabled={false}
+                            keyboardShouldPersistTaps='handled'
+                        />
+                    </View>
+                )}
+                <View style={styles.section}>
+                    <View style={styles.header}>
+                        <Text style={styles.title}>FRIENDS</Text>
+                    </View>
+                    {friends.length > 0 ? (
+                        <FlatList 
+                            data={friends}
+                            renderItem={({item}) => {
+                                return (
+                                    <UserListItem 
+                                        firstName={item.firstName} 
+                                        lastName={item.lastName} 
+                                        fullName={item.fullName} 
+                                        username={item.username}
+                                        button={
+                                            <Pressable onPress={() => handleRemoveFriend(item._id)} >
+                                                <Entypo name="cross" size={16} color="gray" />
+                                            </Pressable>
+                                        }
+                                    />
+                                )
+                            }} 
+                            keyExtractor={item => item._id}
+                            contentContainerStyle={styles.sectionContents}
+                            scrollEnabled={false}
+                            keyboardShouldPersistTaps='handled'
+                        />
+                    ) : (
+                        <View style={{alignSelf: "center", width: "90%", alignItems: "center"}}>
+                            <Text style={{fontFamily: "Quicksand-Regular", fontSize: 20, textAlign: "center"}}>Add Fylo friends to make creating sessions easier!</Text>
+                        </View>
+                    )}
+                </View>
+            </ScrollView>
             <View 
                 style={styles.dropdown}
             >
-                    <FlatList 
-                        data={results}
-                        renderItem={({item}) => {
-                            return <UserListItem 
-                                firstName={item.firstName} 
-                                lastName={item.lastName} 
-                                fullName={item.fullName} 
-                                username={item.username}
-                                button={() => {
-                                    if (outgoingRequests.some(request => request.username == item.username)) {
-                                        return <Button 
-                                            borderRadius={20}
-                                            backgroundColor="#E8763A"
-                                            height={25}
-                                            aspectRatio="3/1"
-                                            fontFamily="Quicksand-SemiBold"
-                                            fontColor="white"
-                                            fontSize={15}
-                                            text="Added!"
-                                        />
-                                    } else if (incomingRequests.some(request => request.username == item.username)) {
-                                        return <Button 
-                                            borderRadius={20}
-                                            backgroundColor="#E8763A"
-                                            height={25}
-                                            aspectRatio="3/1"
-                                            fontFamily="Quicksand-SemiBold"
-                                            fontColor="white"
-                                            fontSize={15}
-                                            text="+ Accept"
-                                            handler={() => handleAcceptFriendRequest(item._id)}
-                                        />
-                                    } else if (friends.some(friend => friend.username == item.username)) {
-                                        return <Button 
-                                            borderRadius={20}
-                                            backgroundColor="#E8763A"
-                                            height={25}
-                                            aspectRatio="3/1"
-                                            fontFamily="Quicksand-SemiBold"
-                                            fontColor="white"
-                                            fontSize={15}
-                                            text="Friends!"
-                                        />
-                                    } else {
-                                        return <Button 
-                                            borderRadius={20}
-                                            backgroundColor="#E8763A"
-                                            height={25}
-                                            aspectRatio="3/1"
-                                            fontFamily="Quicksand-SemiBold"
-                                            fontColor="white"
-                                            fontSize={15}
-                                            text="+ Add"
-                                            handler={() => handleSendFriendRequest(item._id)}
-                                        />
-                                    }
-                                }}
-                            />
-                        }}
-                        keyExtractor={item => item._id}
-                    />
+                <FlatList 
+                    data={results}
+                    renderItem={({item}) => {
+                        return <UserListItem 
+                            firstName={item.firstName} 
+                            lastName={item.lastName} 
+                            fullName={item.fullName} 
+                            username={item.username}
+                            button={() => {
+                                if (outgoingRequests.some(request => request.username == item.username)) {
+                                    return <Button 
+                                        borderRadius={20}
+                                        backgroundColor="#E8763A"
+                                        height={25}
+                                        aspectRatio="3/1"
+                                        fontFamily="Quicksand-SemiBold"
+                                        fontColor="white"
+                                        fontSize={15}
+                                        text="Added!"
+                                    />
+                                } else if (incomingRequests.some(request => request.username == item.username)) {
+                                    return <Button 
+                                        borderRadius={20}
+                                        backgroundColor="#E8763A"
+                                        height={25}
+                                        aspectRatio="3/1"
+                                        fontFamily="Quicksand-SemiBold"
+                                        fontColor="white"
+                                        fontSize={15}
+                                        text="+ Accept"
+                                        handler={() => handleAcceptFriendRequest(item._id)}
+                                    />
+                                } else if (friends.some(friend => friend.username == item.username)) {
+                                    return <Button 
+                                        borderRadius={20}
+                                        backgroundColor="#E8763A"
+                                        height={25}
+                                        aspectRatio="3/1"
+                                        fontFamily="Quicksand-SemiBold"
+                                        fontColor="white"
+                                        fontSize={15}
+                                        text="Friends!"
+                                    />
+                                } else {
+                                    return <Button 
+                                        borderRadius={20}
+                                        backgroundColor="#E8763A"
+                                        height={25}
+                                        aspectRatio="3/1"
+                                        fontFamily="Quicksand-SemiBold"
+                                        fontColor="white"
+                                        fontSize={15}
+                                        text="+ Add"
+                                        handler={() => handleSendFriendRequest(item._id)}
+                                    />
+                                }
+                            }}
+                        />
+                    }}
+                    keyExtractor={item => item._id}
+                    keyboardShouldPersistTaps='handled'
+                />
                 {/* {results.length > 0 ? (
                     <FlatList 
                         data={results}
