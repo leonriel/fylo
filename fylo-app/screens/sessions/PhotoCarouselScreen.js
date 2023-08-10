@@ -32,7 +32,7 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                 });
             }
         } catch (error) {
-            Alert.alert(error.message);
+            Alert.alert("Oh no, there's been an error! Please try again.");
         }
     }
 
@@ -57,6 +57,7 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
             Alert.alert("Saved!")
         } catch (error) {
             console.log(error.message);
+            Alert.alert("Oh no, there's been an error! Please try again.");
         }
     }
 

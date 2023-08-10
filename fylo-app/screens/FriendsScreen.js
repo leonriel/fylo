@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useRef } from 'react';
-import { Text, StyleSheet, TextInput, Pressable, View, FlatList, Keyboard, ScrollView, RefreshControl } from 'react-native';
+import { Text, StyleSheet, TextInput, Pressable, View, FlatList, Keyboard, ScrollView, RefreshControl, Alert } from 'react-native';
 import { getUsers, sendFriendRequest, removeFriend, searchUsers, getPendingIncomingFriendRequests, getPendingOutgoingFriendRequests, acceptFriendRequest, ignoreFriendRequest, cancelFriendRequest } from '../utils/Users';
 import { Entypo } from '@expo/vector-icons';
 import UserListItem from '../components/UserListItem';
@@ -65,6 +65,7 @@ const FriendsScreen = ({navigation, user}) => {
             loadOutgoingRequests();
         } catch (error) {
             console.log(error);
+            Alert.alert(error.message);
         }
     }
 
@@ -77,6 +78,7 @@ const FriendsScreen = ({navigation, user}) => {
             await refreshUser(user.username);
         } catch (error) {
             console.log(error);
+            Alert.alert(error.message);
         }
     }
 
@@ -87,6 +89,7 @@ const FriendsScreen = ({navigation, user}) => {
             await loadFriends();
         } catch (error) {
             console.log(error);
+            Alert.alert(error.message);
         }
     }
 
@@ -96,6 +99,7 @@ const FriendsScreen = ({navigation, user}) => {
             await loadIncomingRequests();
         } catch (error) {
             console.log(error);
+            Alert.alert(error.message);
         }
     }
 
@@ -105,6 +109,7 @@ const FriendsScreen = ({navigation, user}) => {
             await loadOutgoingRequests();
         } catch (error) {
             console.log(error);
+            Alert.alert(error.message);
         }
     }
 

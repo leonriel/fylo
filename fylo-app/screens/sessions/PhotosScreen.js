@@ -164,6 +164,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
                 });
             } catch (error) {
                 console.error(error);
+                Alert.alert("Oh no, there's been an error! Please try again.");
             } finally {
                 setActivityIndicator(false);
             }
@@ -202,6 +203,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
             loadOutgoingInvitations();
         } catch (error) {
             console.log(error);
+            Alert.alert(error.message);
         }
 
     }
@@ -212,6 +214,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
             loadOutgoingInvitations();
         } catch (error) {
             console.log(error);
+            Alert.alert(error.message);
         }
     }
 

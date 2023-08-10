@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import { TextInput, Text, View, SafeAreaView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { TextInput, Text, View, SafeAreaView, Pressable, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -58,6 +58,8 @@ const ContactInfoScreen = ({route, navigation}) => {
             // })
         } catch (error) {
             console.log(error);
+            Alert.alert(error.message.slice(28));
+
         }
         setActivityIndicator(false);
     }

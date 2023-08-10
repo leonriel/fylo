@@ -128,7 +128,8 @@ const CameraScreen = ({ user, sessions, visible, handleClose }) => {
 
             Alert.alert('Uploaded!');
         } catch (error) {
-            Alert.alert(error.message);
+            console.log(error.message);
+            Alert.alert("Oh no, there's been an error! Please try again.");
         } finally {
             setImage(null);
             setActivityIndicator(false);
