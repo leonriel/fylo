@@ -2,9 +2,9 @@
   "expo": {
     "name": "fylo-app",
     "slug": "fylo-app",
-    "version": "1.0.0",
+    "version": "1.0.5",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/splash.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -25,21 +25,47 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Fylo to access your camera." 
+          "cameraPermission": "Allow Fylo to access your camera.",
+          "microphonePermission": "Allow Fylo to use your microphone."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Fylo to access your photos.",
+          "savePhotosPermission": "Allow Fylo to save photos.",
+          "isAccessMediaLocationEnabled": true
         }
       ]
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.fylo-app",
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "Allow Fylo to save photos.",
+        "NSPhotoLibraryUsageDescription": "Allow Fylo to access your photos."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_MEDIA_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "aadca965-3d5c-47e3-a53d-f78700ce7c3b"
+      }
     }
   }
 }

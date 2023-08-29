@@ -3,11 +3,12 @@ import { Text, TextInput, View, StyleSheet } from 'react-native';
 // Types
 // label: String
 // width: String
+// fontSize: Number
 // value: String
 // handler: Callback
 // secureTextEntry: Boolean
 
-const Input = ({label, width, value, handler, secureTextEntry, keyboardType}) => {
+const Input = ({label, width, fontSize, value, placeholder, handler, secureTextEntry, keyboardType}) => {
 
     return (
         <View style={{...styles.inputContainer, width: width}}>
@@ -15,8 +16,9 @@ const Input = ({label, width, value, handler, secureTextEntry, keyboardType}) =>
             <TextInput 
                 secureTextEntry={secureTextEntry} 
                 keyboardType={keyboardType || "default"} 
-                style={styles.input} 
+                style={{...styles.input, fontSize: fontSize}} 
                 onChangeText={(text) => handler(text)} value={value} 
+                placeholder={placeholder}
             />
         </View>
     )

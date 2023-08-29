@@ -1,226 +1,427 @@
-import { useState, useEffect, useContext } from 'react';
-import { Text, StyleSheet, SafeAreaView, TextInput, Alert, View, Button, Keyboard } from 'react-native';
-import { getUsers, sendFriendRequest, removeFriend, searchUsers, getPendingIncomingFriendRequests } from '../utils/Users';
+import { useState, useEffect, useContext, useRef } from 'react';
+import { Text, StyleSheet, TextInput, Pressable, View, FlatList, Keyboard, ScrollView, RefreshControl, Alert } from 'react-native';
+import { getUsers, sendFriendRequest, removeFriend, searchUsers, getPendingIncomingFriendRequests, getPendingOutgoingFriendRequests, acceptFriendRequest, ignoreFriendRequest, cancelFriendRequest } from '../utils/Users';
+import { Entypo } from '@expo/vector-icons';
+import UserListItem from '../components/UserListItem';
+import Button from '../components/Button';
 import { AuthContext } from '../contexts/AuthContext';
 
-// The logic is really bad on this page, but the search queries work
-// Definitely want to split this into components
-
 const FriendsScreen = ({navigation, user}) => {
-    const [searchedFriends, setSearchedFriends] = useState([]);
-    const [searchedStrangers, setSearchedStrangers] = useState([]);
-    const [searchedPendingIncoming, setSearchedPendingIncoming] = useState([]);
-    const [searchText, setSearchText] = useState('');
-    const [friends, setFriends] = useState([]);
-    const [pendingIncoming, setPendingIncoming] = useState([]);
-    const [searchActive, setSearchActive] = useState(false);
-
     const { refreshUser } = useContext(AuthContext);
 
+    const [incomingRequests, setIncomingRequests] = useState([]);
+    const [outgoingRequests, setOutgoingRequests] = useState([]);
+    const [friends, setFriends] = useState([]);
+    const [results, setResults] = useState([]);
+    const [focused, setFocused] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const searchBar = useRef('');
+
     useEffect(() => {
-        const loadFriends = async () => {
-            const users = await getUsers(user.friends);
-            setFriends(users);
+        const load = async () => {
+            await loadIncomingRequests();
+            await loadOutgoingRequests();
+            await loadFriends();
         }
 
-        const loadPendingIncoming = async () => {
-            const users = await getPendingIncomingFriendRequests(user);
-            setPendingIncoming(users);
+        load();
+    }, []);
+
+    const loadIncomingRequests = async () => {
+        let requests = await getPendingIncomingFriendRequests(user._id);
+
+        requests = requests.map(request => request.sender);
+
+        setIncomingRequests(requests);
+    }
+
+    const loadOutgoingRequests = async () => {
+        let requests = await getPendingOutgoingFriendRequests(user._id);
+        
+        requests = requests.map(request => request.recipient);
+
+        setOutgoingRequests(requests);
+    }
+
+    const loadFriends = async () => {
+        const friends = await getUsers(user.friends);
+
+        setFriends(friends);
+    }
+
+    const handleSearch = async (text) => {
+        if (text) {
+            const searchResults = await searchUsers(text);
+            setResults(searchResults);
+        } else {
+            setResults([]);
         }
-
-        loadFriends();
-        loadPendingIncoming();
-    }, [user]);
-
-    const handleUserSearch = async (query) => {
-        const searchedUsers = await searchUsers(query);
-
-        const resultsPendingIncoming = [];
-
-        const resultsFriends = [];
-
-        const resultsStrangers = [];
-
-        const pendingIncomingIds = pendingIncoming.map(doc => {
-            const sender = doc.sender;
-            return sender._id;
-        })
-
-        searchedUsers.forEach(searchedUser => {
-            const searchedId = searchedUser._id;
-            const searchedUsername = searchedUser.username;
-            const searchedFullName = searchedUser.fullName;
-            if (searchedId != user._id) {
-                if (user.friends.includes(searchedId)) {
-                    const component = (
-                        <View key={searchedId} style={styles.friend}>
-                            <Text style={styles.text}>{searchedFullName}</Text>
-                        </View>
-                    )
-                    resultsFriends.push(component);
-                } else if (pendingIncomingIds.includes(searchedId)) {
-                    const component = (
-                        <View key={searchedId} style={styles.friend}>
-                            <Text style={styles.text}>{searchedFullName}</Text>
-                        </View>
-                    )
-                    resultsPendingIncoming.push(component);
-                }  else {
-                    const component = (
-                        <View key={searchedId} style={styles.friend}>
-                            <Text style={styles.text}>{searchedFullName}</Text>
-                            <Button onPress={() => handleAddFriend(searchedUser)} title="Add" />
-                        </View>
-                    )
-                    resultsStrangers.push(component);
-                }
-            }
-        })
-
-        setSearchedFriends(resultsFriends);
-        setSearchedStrangers(resultsStrangers);
-        setSearchedPendingIncoming(resultsPendingIncoming);
     }
 
-    const handleAddFriend = async (friend) => {
-        sendFriendRequest(user, friend).then((resp) => {
-            Alert.alert("Friend added!");
-            refreshUser(user.username);
-        });
+    const handleSendFriendRequest = async (friendId) => {
+        try {
+            await sendFriendRequest(user._id, friendId);
+            loadOutgoingRequests();
+        } catch (error) {
+            console.log(error);
+            Alert.alert(error.message);
+        }
     }
 
-    const handleActiveSearch = async () => {
-        setSearchActive(true);
+    const handleAcceptFriendRequest = async (senderId) => {
+        try {
+            await acceptFriendRequest(senderId, user._id)
+            user.friends.push(senderId);
+            await loadFriends();
+            await loadIncomingRequests();            
+            await refreshUser(user.username);
+        } catch (error) {
+            console.log(error);
+            Alert.alert(error.message);
+        }
+    }
+
+    const handleRemoveFriend = async (friendId) => {
+        try {
+            await removeFriend(user._id, friendId);
+            await refreshUser(user.username);
+            await loadFriends();
+        } catch (error) {
+            console.log(error);
+            Alert.alert(error.message);
+        }
+    }
+
+    const handleIgnoreRequest = async (senderId) => {
+        try {
+            await ignoreFriendRequest(senderId, user._id);
+            await loadIncomingRequests();
+        } catch (error) {
+            console.log(error);
+            Alert.alert(error.message);
+        }
+    }
+
+    const handleCancelRequest = async (recipientId) => {
+        try {
+            await cancelFriendRequest(user._id, recipientId)
+            await loadOutgoingRequests();
+        } catch (error) {
+            console.log(error);
+            Alert.alert(error.message);
+        }
     }
 
     const handleCancelSearch = async () => {
-        setSearchActive(false);
-        setSearchedFriends([]);
-        setSearchedStrangers([]);
-        setSearchText('');
         Keyboard.dismiss();
+        searchBar.current.clear();
+        setResults([]);
+        setFocused(false);
     }
-    
-    const handleRemoveFriend = async (friend) => {
-        return Alert.alert('Are you sure?', '', [
-            {
-                text: 'Cancel',
-                style: 'cancel'
-            },
-            {  
-                text: 'Remove',
-                onPress: async () => {
-                    await removeFriend(user.friend);
-                    refreshUser(user.username);
-                }
-            }
-        ])
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        setTimeout(async () => {
+            await refreshUser(user.username);
+            await loadIncomingRequests();
+            await loadOutgoingRequests();
+            await loadFriends();
+            setRefreshing(false);
+        }, 1000);
     }
     
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.searchContainer}>
-                <TextInput style={styles.input} placeholder="Add or search friends" value={searchText} onPressIn={handleActiveSearch} onChangeText={(text) => {
-                    setSearchText(text);
-                    if (text != '') {
-                        handleUserSearch(text)
-                    } else {
-                        setSearchedFriends([]);
-                        setSearchedStrangers([]);
-                    }
-                }} />
-                {searchActive && <Button style={{flex: 1}} title="Cancel" onPress={handleCancelSearch} />}
+        <View style={styles.container}>
+            <View style={styles.searchComponent}>
+                <View style={styles.searchBarContainer}>
+                    <Entypo name="magnifying-glass" size={24} color="black" />
+                    <TextInput 
+                        autoCorrect={false}
+                        clearButtonMode={'while-editing'}
+                        ref={input => {searchBar.current = input}}
+                        style={styles.searchBar} 
+                        placeholder="Add or search friends"
+                        placeholderTextColor='gray'
+                        onChangeText={(text) => handleSearch(text)}
+                        onFocus={() => setFocused(true)}
+                    />
+                </View>
+                {focused && <View style={styles.cancelSearch}>
+                    <Button 
+                        borderRadius={20}
+                        backgroundColor="#E8763A"
+                        height={25}
+                        aspectRatio="3/1"
+                        fontFamily="Quicksand-SemiBold"
+                        fontColor="white"
+                        fontSize={15}
+                        text="Cancel"
+                        handler={handleCancelSearch}
+                    />
+                </View>}
             </View>
-            {searchText == '' ? (
-                <>
-                    <Text style={styles.text}>My Friends</Text>
-                    <View style={styles.friendsContainer}>
-                    {friends.map(friend => (
-                        <View key={friend.username} style={styles.friend}>
-                            <Text style={styles.text}>{friend.fullName}</Text>
-                            <Button title="Remove" onPress={() => handleRemoveFriend(friend.username)} />
+            <ScrollView 
+                contentContainerStyle={{height: "100%"}}                         
+                keyboardShouldPersistTaps='handled'
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} /> }
+            >
+                {outgoingRequests.length > 0 && (
+                    <View style={styles.section}>
+                        <View style={styles.header}>
+                            <Text style={styles.title}>ADDED</Text>
                         </View>
-                    ))}
+                        <FlatList 
+                            data={outgoingRequests}
+                            renderItem={({item}) => {
+                                return (
+                                    <UserListItem 
+                                        firstName={item.firstName} 
+                                        lastName={item.lastName} 
+                                        fullName={item.fullName} 
+                                        username={item.username}
+                                        button={
+                                            <Pressable onPress={() => handleCancelRequest(item._id)} >
+                                                <Entypo name="cross" size={16} color="gray" />
+                                            </Pressable>
+                                        }
+                                    />
+                                )
+                            }} 
+                            keyExtractor={item => item._id}
+                            contentContainerStyle={{alignSelf: "center", width: "90%"}}
+                            scrollEnabled={false}
+                            keyboardShouldPersistTaps='handled'
+                        />
                     </View>
-                </> ) : (
-                    <>
-                        {searchedPendingIncoming.length != 0 ? (
-                            <>
-                                <Text style={styles.text}>Added Me</Text>
-                                <View style={styles.friendsContainer}>
-                                    {searchedPendingIncoming}
-                                </View>
-                            </>
-                        ) : null} 
-                        {searchedFriends.length != 0 ? (
-                            <>
-                                <Text style={styles.text}>My Friends</Text>
-                                <View style={styles.friendsContainer}>
-                                    {searchedFriends}
-                                </View>
-                            </>) : null}
-                        {searchedStrangers.length != 0 ? (
-                            <>
-                                <Text style={styles.text}>Add Friends</Text>
-                                <View style={styles.friendsContainer}>
-                                    {searchedStrangers}
-                                </View>
-                            </>
-                        ) : null}
-                    </>
-                )
-            }
-        </SafeAreaView>
+                )}
+                {incomingRequests.length > 0 && (
+                    <View style={styles.section}>
+                        <View style={styles.header}>
+                            <Text style={styles.title}>ADDED ME</Text>
+                        </View>
+                        <FlatList 
+                            data={incomingRequests}
+                            renderItem={({item}) => {
+                                return (
+                                    <UserListItem 
+                                        firstName={item.firstName} 
+                                        lastName={item.lastName} 
+                                        fullName={item.fullName} 
+                                        username={item.username}
+                                        button={
+                                            <>
+                                                <Button 
+                                                    borderRadius={20}
+                                                    backgroundColor="#E8763A"
+                                                    height={25}
+                                                    aspectRatio="3/1"
+                                                    fontFamily="Quicksand-SemiBold"
+                                                    fontColor="white"
+                                                    fontSize={15}
+                                                    text="+ Accept"
+                                                    handler={() => handleAcceptFriendRequest(item._id)}
+                                                />
+                                                <Pressable onPress={() => handleIgnoreRequest(item._id)} >
+                                                    <Entypo name="cross" size={16} color="gray" />
+                                                </Pressable>
+                                            </>
+                                        }
+                                    />
+                                )
+                            }} 
+                            keyExtractor={item => item._id}
+                            contentContainerStyle={styles.sectionContents}
+                            scrollEnabled={false}
+                            keyboardShouldPersistTaps='handled'
+                        />
+                    </View>
+                )}
+                <View style={styles.section}>
+                    <View style={styles.header}>
+                        <Text style={styles.title}>FRIENDS</Text>
+                    </View>
+                    {friends.length > 0 ? (
+                        <FlatList 
+                            data={friends}
+                            renderItem={({item}) => {
+                                return (
+                                    <UserListItem 
+                                        firstName={item.firstName} 
+                                        lastName={item.lastName} 
+                                        fullName={item.fullName} 
+                                        username={item.username}
+                                        button={
+                                            <Pressable onPress={() => handleRemoveFriend(item._id)} >
+                                                <Entypo name="cross" size={16} color="gray" />
+                                            </Pressable>
+                                        }
+                                    />
+                                )
+                            }} 
+                            keyExtractor={item => item._id}
+                            contentContainerStyle={styles.sectionContents}
+                            scrollEnabled={false}
+                            keyboardShouldPersistTaps='handled'
+                        />
+                    ) : (
+                        <View style={{alignSelf: "center", width: "90%", alignItems: "center"}}>
+                            <Text style={{fontFamily: "Quicksand-Regular", fontSize: 20, textAlign: "center"}}>Add Fylo friends to make creating sessions easier!</Text>
+                        </View>
+                    )}
+                </View>
+            </ScrollView>
+            <View 
+                style={styles.dropdown}
+            >
+                <FlatList 
+                    data={results}
+                    renderItem={({item}) => {
+                        return <UserListItem 
+                            firstName={item.firstName} 
+                            lastName={item.lastName} 
+                            fullName={item.fullName} 
+                            username={item.username}
+                            button={() => {
+                                if (outgoingRequests.some(request => request.username == item.username)) {
+                                    return <Button 
+                                        borderRadius={20}
+                                        backgroundColor="#E8763A"
+                                        height={25}
+                                        aspectRatio="3/1"
+                                        fontFamily="Quicksand-SemiBold"
+                                        fontColor="white"
+                                        fontSize={15}
+                                        text="Added!"
+                                    />
+                                } else if (incomingRequests.some(request => request.username == item.username)) {
+                                    return <Button 
+                                        borderRadius={20}
+                                        backgroundColor="#E8763A"
+                                        height={25}
+                                        aspectRatio="3/1"
+                                        fontFamily="Quicksand-SemiBold"
+                                        fontColor="white"
+                                        fontSize={15}
+                                        text="+ Accept"
+                                        handler={() => handleAcceptFriendRequest(item._id)}
+                                    />
+                                } else if (friends.some(friend => friend.username == item.username)) {
+                                    return <Button 
+                                        borderRadius={20}
+                                        backgroundColor="#E8763A"
+                                        height={25}
+                                        aspectRatio="3/1"
+                                        fontFamily="Quicksand-SemiBold"
+                                        fontColor="white"
+                                        fontSize={15}
+                                        text="Friends!"
+                                    />
+                                } else {
+                                    return <Button 
+                                        borderRadius={20}
+                                        backgroundColor="#E8763A"
+                                        height={25}
+                                        aspectRatio="3/1"
+                                        fontFamily="Quicksand-SemiBold"
+                                        fontColor="white"
+                                        fontSize={15}
+                                        text="+ Add"
+                                        handler={() => handleSendFriendRequest(item._id)}
+                                    />
+                                }
+                            }}
+                        />
+                    }}
+                    keyExtractor={item => item._id}
+                    keyboardShouldPersistTaps='handled'
+                />
+                {/* {results.length > 0 ? (
+                    <FlatList 
+                        data={results}
+                        renderItem={({item}) => {
+                            <UserListItem 
+                                firstName={item.firstName} 
+                                lastName={item.lastName} 
+                                fullName={item.fullName} 
+                                username={item.username}
+                            />
+                        }}
+                        keyExtractor={item => item._id}
+                    />
+                ) : (
+                    <Text style={{fontSize: 20, fontFamily: "Quicksand-Regular"}}>No matches</Text>
+                )} */}
+            </View>
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        // alignItems: 'center',
-        margin: 8
+        flex: 1, 
+        alignItems: "center", 
+        marginTop: 10
     },
-    friendsContainer: {
-        flexDirection: 'column',
-        width: "100%"
+    section: {
+        width: "100%", 
+        marginTop: 20
     },
-    friend: {
-        flexDirection: 'row',
-        borderBottomWidth: 1,
-        borderLeftWidth: 1,
-        borderTopWidth: 1,
-        borderRightWidth: 1,
-        borderTopRightRadius: 5,
-        borderTopLeftRadius: 5,
-        borderBottomRightRadius: 5,
-        borderBottomLeftRadius: 5,
-        padding: 8,
-        margin: 8,
-        justifyContent: "space-between",
-        alignItems: 'center'
+    sectionContents: {
+        width: "90%", 
+        alignSelf: "center"
     },
-    searchContainer: {
-        width: "100%",
+    header: {
+        flexDirection: "row", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        alignSelf: "center", 
+        width: "90%"
+    },
+    title: {
+        fontFamily: "Quicksand-SemiBold", 
+        fontSize: 12
+    },
+    searchBarContainer: {
         flexDirection: "row",
-        alignItems: 'center',
+        justifyContent: "flex-start",
+        alignItems:"center",
+        alignSelf: "center",
+        flex: 5,
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        borderRadius: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        height: 40,
+        overflow: "hidden",
     },
-    input: {
-        borderBottomWidth: 1,
-        borderTopWidth: 1,
-        borderRightWidth: 1,
-        borderLeftWidth: 1,
-        borderTopRightRadius: 5,
-        borderTopLeftRadius: 5,
-        borderBottomRightRadius: 5,
-        borderBottomLeftRadius: 5,
-        margin: 8,
-        padding: 8,
-        fontSize: 16,
-        flex: 5
+    searchComponent: {
+        width: "90%",
+        alignSelf: "center",
+        flexDirection: "row"
     },
-    text: {
-        fontSize: 16,
-        marginLeft: 8
+    searchBar: {
+        width: "90%", 
+        height: "100%", 
+        fontSize: 20, 
+        fontFamily: "Quicksand-Regular", 
+        paddingHorizontal: 5
+    },
+    cancelSearch: {
+        alignSelf: "center",
+        marginLeft: 10
+    },
+    dropdown: {
+        backgroundColor: "white", 
+        width: "90%", 
+        alignSelf: "center", 
+        shadowOffset: { width: 0, height: 5 }, 
+        shadowOpacity: 0.5,
+        shadowRadius: 5,
+        borderRadius: 10,
+        position: 'absolute', 
+        top: "8%",
+        paddingHorizontal: 10
     }
 });
 

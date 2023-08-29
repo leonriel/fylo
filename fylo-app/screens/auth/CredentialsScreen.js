@@ -29,7 +29,7 @@ const CredentialsScreen = ({route, navigation}) => {
         navigation.navigate('Sign Up 3', {
             firstName: route.params.firstName,
             lastName: route.params.lastName,
-            username: username.toLowerCase(),
+            username: username.trim().toLowerCase(),
             password: password
         })
     }
@@ -41,7 +41,7 @@ const CredentialsScreen = ({route, navigation}) => {
            <Input label="PASSWORD" width="80%" value={password} handler={(text) => setPassword(text)} secureTextEntry={true} />
            <Text style={styles.disclaimer}>Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.</Text>
            <Button     
-                borderRadius="25%"
+                borderRadius={20}
                 backgroundColor="#E8763A"
                 height={30}
                 aspectRatio={"3/1"}

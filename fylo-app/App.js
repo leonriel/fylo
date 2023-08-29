@@ -1,13 +1,20 @@
-import 'react-native-gesture-handler';
+import 'react-native-gesture-handler'; // Required for react-navigation
+import 'react-native-url-polyfill/auto'; // Required for AWS Cognito (Amplify Auth)
+import 'react-native-get-random-values'; // Required for AWS Cognito (Amplify Auth)
+
 import { useState, useEffect, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Alert, Text, Dimensions, ActivityIndicator } from 'react-native';
+import { StyleSheet, Alert, Dimensions, ActivityIndicator, Modal, Pressable, View } from 'react-native';
+import FastImage from 'react-native-fast-image';
+// import { Image } from 'expo-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Ionicons } from '@expo/vector-icons'; 
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Amplify, Auth, Hub } from 'aws-amplify';
 
@@ -20,6 +27,9 @@ import VerificationScreen from './screens/auth/VerificationScreen';
 import HomeScreen from './screens/HomeScreen';
 import SessionsNavigator from './screens/sessions/SessionsNavigator';
 import PlaygroundScreen from './screens/PlaygroundScreen';
+import ProfileIcon from './components/ProfileIcon';
+import CameraScreen from './screens/CameraScreen';
+import FriendsScreen from './screens/FriendsScreen';
 import { AuthContext } from './contexts/AuthContext';
 import { SessionsContext } from './contexts/SessionsContext';
 
@@ -54,6 +64,7 @@ export default function App() {
   const [sessions, setSessions] = useState([]); 
   const [user, setUser] = useState(null);
   const [appIsReady, setAppIsReady] = useState(false);
+  const [cameraModalVisible, setCameraModalVisible] = useState(false);
 
   useEffect(() => {
     const prepare = async () => {
@@ -95,7 +106,7 @@ export default function App() {
     () => ({
       signIn: async (username, password) => {
         if (!username || !password) {
-          return Alert.alert('Invalid username or password combination.');
+          return Alert.alert('Invalid username and password combination.');
         }
 
         try {
@@ -104,6 +115,7 @@ export default function App() {
           loadData(user.attributes.preferred_username);
         } catch (error) {
           console.log(error);
+          Alert.alert('Invalid username and password combination.');
         } 
       },
       autoSignIn: async (username) => {
@@ -124,6 +136,7 @@ export default function App() {
       signOut: async () => {
         try {
           await Auth.signOut();
+          setUser(null);
           setIsSignedIn(false);
         } catch (error) {
           console.log(error);
@@ -182,56 +195,112 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={authContext}>
-      <StatusBar style="auto" />
-      <NavigationContainer onReady={onFinishedMounting} theme={{...DefaultTheme, colors: {...DefaultTheme.colors, background: "white"}}}>
-          {isSignedIn ? (
-            user ? (
-            <SessionsContext.Provider value={sessionsContext}>
-                <Tab.Navigator 
-                  initialRouteName='Home' 
-                  tabBarPosition='bottom' 
-                  initialLayout={{width: Dimensions.get('window').width}} 
-                  screenOptions={{
-                      // tabBarShowLabel: false,
-                      // tabBarShowIcon: false,
-                      swipeEnabled: true,
-                      tabBarStyle: {
-                          // display: 'none'
-                      }
-                  }}
-                  >
-                  {/* <Tab.Screen name="Friends" children={(props) => <FriendsScreen {...props} user={user} />} /> */}
-                  <Tab.Screen 
-                      name="Playground"
-                      children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
-                  />
-                  <Tab.Screen 
-                      name="Home" 
-                      children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
-                  />
-                  <Tab.Screen 
-                      name="Sessions Navigator" 
-                      children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} />} 
-                  />
-              </Tab.Navigator>
-            </SessionsContext.Provider>
-            ) : (
-              <ActivityIndicator />
-            )
-          ) : (
-            <AuthStack.Navigator initialRoutName="Landing">
-              <AuthStack.Screen name="Landing" component={LandingScreen} options={{headerShown: false}} />
-              <AuthStack.Screen name="Sign In" component={SignInScreen} options={authScreenOptions} />
-              <AuthStack.Screen name="Sign Up 1" component={NameScreen} options={authScreenOptions} />
-              <AuthStack.Screen name="Sign Up 2" component={CredentialsScreen} options={authScreenOptions} />
-              <AuthStack.Screen name="Sign Up 3" component={ContactInfoScreen} options={authScreenOptions} />
-              <AuthStack.Screen name="Sign Up 4" component={VerificationScreen} options={authScreenOptions} />
-            </AuthStack.Navigator>
-          )
-          }
-      </NavigationContainer>
-    </AuthContext.Provider>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <AuthContext.Provider value={authContext}>
+        <StatusBar style="auto" />
+        <SafeAreaProvider>
+          <NavigationContainer onReady={onFinishedMounting} theme={{...DefaultTheme, colors: {...DefaultTheme.colors, background: "white"}}}>
+              {isSignedIn ? (
+                user ? (
+                  <SessionsContext.Provider value={sessionsContext}>
+                    <SafeAreaView style={{flex: 1}} edges={['top', 'right', 'left']}>
+                      <View style={styles.header}>
+                        <Ionicons name="settings-outline" size={30} color="black" />                        
+                        <FastImage style={styles.logo} source={require('./assets/logo-black.png')} />
+                        <Pressable onPress={() => setCameraModalVisible(true)} style={({pressed}) => pressed && {opacity: 0.5}}>
+                          <Ionicons name="camera-outline" size={30} color="black" />
+                        </Pressable>
+                      </View>
+                      <Tab.Navigator 
+                        initialRouteName='Sessions Navigator' 
+                        tabBarPosition='bottom' 
+                        initialLayout={{width: Dimensions.get('window').width}} 
+                        screenOptions={{
+                          tabBarStyle: {
+                            height: "10%",
+                            backgroundColor: "powderblue",
+                            borderRadius: 20,
+                            shadowOffset: { width: 0, height: -3},
+                            shadowOpacity: 0.2,
+                            shadowRadius: 5
+                          },
+                          tabBarIndicator: () => {
+                            return null
+                          },
+                          animationEnabled: false
+                            // swipeEnabled: false
+                        }}
+                        >
+                        <Tab.Screen 
+                          name="Friends" 
+                          children={(props) => <FriendsScreen {...props} user={user} />} 
+                          options={{
+                            tabBarShowLabel: false,
+                            tabBarIcon: ({focused, color}) => {
+                              return (
+                                focused ? <Ionicons name="people" size={24} color="black" /> : <Ionicons name="people-outline" size={24} color="black" />
+                              )
+                            }
+                          }}
+                        />
+                        {/* <Tab.Screen 
+                            name="Home" 
+                            children={(props) => <HomeScreen {...props} sessions={sessions} user={user} />} 
+                            options={{
+                              tabBarShowLabel: false,
+                              tabBarIcon: ({focused, color}) => {
+                                return (
+                                  focused ? <Ionicons name="home" size={24} color="black" /> : <Ionicons name="home-outline" size={24} color="black" />
+                                )
+                              }
+                            }}
+                        /> */}
+                        <Tab.Screen 
+                            name="Sessions Navigator" 
+                            children={(props) => <SessionsNavigator {...props} sessions={sessions} user={user} handleOpenCamera={() => setCameraModalVisible(true)} />} 
+                            options={{
+                              tabBarShowLabel: false,
+                              tabBarIcon: ({focused, color}) => {
+                                return (
+                                  focused ? <Ionicons name="albums" size={24} color="black" /> : <Ionicons name="albums-outline" size={24} color="black" />
+                                )
+                              }
+                            }}
+                        />
+                        <Tab.Screen 
+                            name="Playground"
+                            children={(props) => <PlaygroundScreen {...props} sessions={sessions} user={user} />}
+                            options={{
+                              tabBarShowLabel: false,
+                              tabBarIcon: ({focused, color}) => {
+                                return (
+                                  focused ? <Ionicons name="person" size={24} color="black" /> : <Ionicons name="person-outline" size={24} color="black" />
+                                )
+                              }
+                            }}
+                        />
+                      </Tab.Navigator>
+                      <CameraScreen user={user} sessions={sessions} visible={cameraModalVisible} handleClose={() => setCameraModalVisible(false)} />
+                    </SafeAreaView>
+                  </SessionsContext.Provider>
+                ) : (
+                  <ActivityIndicator />
+                )
+              ) : (
+                <AuthStack.Navigator initialRoutName="Landing">
+                  <AuthStack.Screen name="Landing" component={LandingScreen} options={{headerShown: false}} />
+                  <AuthStack.Screen name="Sign In" component={SignInScreen} options={authScreenOptions} />
+                  <AuthStack.Screen name="Sign Up 1" component={NameScreen} options={authScreenOptions} />
+                  <AuthStack.Screen name="Sign Up 2" component={CredentialsScreen} options={authScreenOptions} />
+                  <AuthStack.Screen name="Sign Up 3" component={ContactInfoScreen} options={authScreenOptions} />
+                  <AuthStack.Screen name="Sign Up 4" component={VerificationScreen} options={authScreenOptions} />
+                </AuthStack.Navigator>
+              )
+              }
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </AuthContext.Provider>
+    </GestureHandlerRootView>
     );
 }
 
@@ -242,4 +311,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  header: {
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    alignItems: "center",
+    alignSelf: "center", 
+    width: "90%",
+    height: 30
+  },
+  logo: {
+    height: 30, 
+    aspectRatio: "228/76",
+    marginRight: 'auto',
+    marginLeft: 'auto'
+  }
 });
