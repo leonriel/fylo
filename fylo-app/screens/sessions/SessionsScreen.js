@@ -2,7 +2,7 @@ import { useState, useContext } from 'react';
 import { Pressable, View, StyleSheet, FlatList, Text, Modal, RefreshControl, Dimensions } from 'react-native';
 // import { Image } from 'expo-image';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
-import FastImage from 'react-native-fast-image';
+// import FastImage from 'react-native-fast-image';
 import SessionListItem from  '../../components/SessionListItem';
 import NameSessionScreen from '../create_session/NameSessionScreen';
 import { AntDesign, Ionicons, Entypo } from '@expo/vector-icons'; 
@@ -30,6 +30,8 @@ const SessionsScreen = ({ navigation, sessions, user, handleOpenCamera }) => {
             </Pressable>
         )
     }
+
+    console.log(sessions);
 
     return (
         <View style={{flex: 1, alignItems: "center", marginTop: 10}}>

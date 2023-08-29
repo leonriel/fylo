@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { Modal, FlatList, View, Dimensions, Pressable, Alert, StyleSheet } from 'react-native';
+import { useEffect, useState, useRef, useContext } from 'react';
+import { Modal, FlatList, View, Dimensions, Pressable, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import FastImage from 'react-native-fast-image';
 // import { Image } from 'expo-image';
 import { Video, ResizeMode } from 'expo-av';
@@ -9,16 +9,23 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Entypo, Feather } from '@expo/vector-icons';
 import { v4 as uuidv4 } from 'uuid';
 import * as MediaLibrary from 'expo-media-library';
+import { deletePhoto } from '../../utils/Sessions';
+import { SessionsContext } from '../../contexts/SessionsContext';
 
 // offset is a react ref from PhotosScreen.js
-const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
+const PhotoCarousel = ({user, session, photos, visible, handleClose, offset, loadPhotos}) => {
     const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+
+    const [activityIndicator, setActivityIndicator] = useState(false);
+
+    const { reloadSessions } = useContext(SessionsContext);
 
     const totalItemWidth = Dimensions.get('window').width + 20
 
     // SHARESHEET ERRORS!!!!! >:(
     const handleShare = async (uri) => {
         try {
+            setActivityIndicator(true);
             const downloadPath = `${FileSystem.cacheDirectory}${uuidv4()}.jpeg`;
             const { uri: localUrl } = await FileSystem.downloadAsync(
                 uri,
@@ -33,6 +40,8 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
             }
         } catch (error) {
             Alert.alert("Oh no, there's been an error! Please try again.");
+        } finally {
+            setActivityIndicator(false);
         }
     }
 
@@ -46,6 +55,8 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                 }
             }
 
+            setActivityIndicator(true);
+
             const downloadPath = `${FileSystem.cacheDirectory}${uuidv4()}.jpeg`;
             const { uri: localUrl } = await FileSystem.downloadAsync(
                 uri,
@@ -58,6 +69,22 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
         } catch (error) {
             console.log(error.message);
             Alert.alert("Oh no, there's been an error! Please try again.");
+        } finally {
+            setActivityIndicator(false);
+        }
+    }
+
+    const handleDelete = async (key) => {
+        try {
+            setActivityIndicator(true);
+            await deletePhoto(session, key, user);
+        } catch (error) {
+            Alert.alert(error.response.data.message);
+        } finally {
+            setActivityIndicator(false);
+            await reloadSessions(user.sessions);
+            await loadPhotos();
+            handleClose();
         }
     }
 
@@ -130,9 +157,20 @@ const PhotoCarousel = ({photos, visible, handleClose, offset}) => {
                             >
                                 <Feather name="download" size={24} color="black" />                       
                             </Pressable>
+                            <Pressable 
+                                onPress={async () => {
+                                    const index = offset.current;
+                                    const photo = photos[index];
+                                    await handleDelete(photo.key)
+                                }}
+                                style={[{marginLeft: 10}, ({pressed}) => pressed && {opacity: 0.5}]}
+                            >
+                                <Feather name="trash-2" size={24} color="red" />                       
+                            </Pressable>
                         </View>
 
                     </View>
+                    {activityIndicator && <ActivityIndicator />}
                     <FlatList
                         data={photos}
                         renderItem={({item}) => {

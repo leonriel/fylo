@@ -156,3 +156,17 @@ export const uploadPhoto = async (session, imgBlob, owner, type, thumbnail = und
         console.log(error.message);
     }
 }
+
+export const deletePhoto = async (session, key, owner) => {
+    try {
+        await axios.post("https://fylo-app-server.herokuapp.com/session/removePhoto", {
+            session: session._id,
+            key: key,
+            owner: owner._id
+        });
+
+        await Storage.remove(key);
+    } catch (error) {
+        throw error;
+    }
+}

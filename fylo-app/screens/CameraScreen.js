@@ -4,7 +4,7 @@ import { Video, ResizeMode } from 'expo-av';
 // import VideoPlayer from 'expo-video-player';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import { useState, useEffect, useRef, useContext } from 'react';
-import { StyleSheet, Text, Pressable, View, Alert, ImageBackground, Modal } from 'react-native';
+import { StyleSheet, Text, Pressable, View, Alert, ImageBackground, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Entypo, Ionicons } from '@expo/vector-icons';
 import { uploadPhoto } from '../utils/Sessions';
@@ -126,7 +126,6 @@ const CameraScreen = ({ user, sessions, visible, handleClose }) => {
                 reloadSessions(user.sessions);
             });
 
-            Alert.alert('Uploaded!');
         } catch (error) {
             console.log(error.message);
             Alert.alert("Oh no, there's been an error! Please try again.");
@@ -222,6 +221,7 @@ const CameraScreen = ({ user, sessions, visible, handleClose }) => {
                                     <Button onPress={toggleCameraType} icon='cycle' color='#fff' size={30} />   
                                 </View>
                             )}
+                            {activityIndicator && <ActivityIndicator />}
                             <View style={styles.footer}>
                                 {!image ? (
                                     <>

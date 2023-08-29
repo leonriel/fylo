@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, FlatList, ScrollView, Pressable, Alert, RefreshControl } from 'react-native';
 // import { Image } from 'expo-image';
-import FastImage from 'react-native-fast-image';
+// import FastImage fsrom 'react-native-fast-image';
 import SessionListItem from '../components/SessionListItem';
 import { getPendingIncomingSessionInvites } from '../utils/Sessions';
 import Button from '../components/Button';

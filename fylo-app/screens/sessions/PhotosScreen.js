@@ -76,12 +76,12 @@ const PhotosScreen = ({ navigation, session, user }) => {
             headerStyle: {
                 height: 30
             },
-        })
+        });
         loadPhotos();
         loadOutgoingInvitations();
         loadCollaborators();
         loadFriends();
-    }, []);
+    }, [session]);
 
     const loadPhotos = async () => {
         const numPhotos = session.photos.length;
@@ -97,6 +97,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
 
             return ({
                 id: numPhotos - index,
+                key: photo.key,
                 uri: url,
                 type: photo.type,
                 thumbnail: thumbnail
@@ -320,7 +321,15 @@ const PhotosScreen = ({ navigation, session, user }) => {
                             refreshControl={<RefreshControl refreshing={refreshingPhotos} onRefresh={handleRefreshPhotos} />}
                         />
                     </View>
-                    <PhotoCarousel visible={modalVisible} photos={photos} handleClose={() => setModalVisible(false)} offset={offset} />
+                    <PhotoCarousel 
+                        user={user} 
+                        session={session} 
+                        visible={modalVisible} 
+                        photos={photos} 
+                        handleClose={() => setModalVisible(false)} 
+                        offset={offset} 
+                        loadPhotos={() => loadPhotos()}
+                    />
                 </>
             ) : <Text style={{fontSize: 16, fontFamily: "Quicksand-Regular", alignSelf: "center"}}>This session has no photos!</Text>}
             <Modal
