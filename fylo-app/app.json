@@ -2,7 +2,7 @@
   "expo": {
     "name": "fylo-app",
     "slug": "fylo-app",
-    "version": "1.0.5",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/splash.png",
     "userInterfaceStyle": "light",
@@ -36,7 +36,8 @@
           "savePhotosPermission": "Allow Fylo to save photos.",
           "isAccessMediaLocationEnabled": true
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,

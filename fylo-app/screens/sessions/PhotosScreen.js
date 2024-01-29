@@ -306,7 +306,7 @@ const PhotosScreen = ({ navigation, session, user }) => {
             {activityIndicator && <ActivityIndicator />} 
             {photos.length > 0 ? (
                 <>
-                    <View style={{width: "100%", justifyContent: "center", alignSelf: "center"}}>
+                    <View style={{width: "100%", justifyContent: "center", alignSelf: "center", height: "100%"}}>
                         <FlatList 
                             data={photos}
                             renderItem={({item, index}) => {
@@ -317,7 +317,6 @@ const PhotosScreen = ({ navigation, session, user }) => {
                             ItemSeparatorComponent={() => <View style={{height: 1}} />}
                             refreshing={true}
                             scrollEnabled={true}
-                            contentContainerStyle={{height: "100%"}}
                             refreshControl={<RefreshControl refreshing={refreshingPhotos} onRefresh={handleRefreshPhotos} />}
                         />
                     </View>
